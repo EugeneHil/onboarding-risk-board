@@ -37,6 +37,7 @@ export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
   }
 
   const seen = new Set<string>();
+  const explicit = new Set(rows.map((r) => pick(r, P.id)).filter((v) => v !== ''));
   let generated = 0;
   rows.forEach((row, i) => {
     const n = i + 1;
@@ -79,7 +80,7 @@ export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
       do {
         generated += 1;
         id = `R-${String(generated).padStart(3, '0')}`;
-      } while (seen.has(id));
+      } while (seen.has(id) || explicit.has(id));
     }
     seen.add(id);
     const mentor = pick(row, P.mentor);
@@ -104,12 +105,12 @@ export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
 }
 
 const KIND_RULES: Array<[RegExp, TaskKind]> = [
+  [/обратн|feedback/i, 'feedback'],
   [/наставник/i, 'mentor_meeting'],
   [/инструктаж|безопасн/i, 'safety'],
   [/документ|оформл/i, 'docs'],
   [/обучен/i, 'training'],
-  [/обратн|feedback/i, 'feedback'],
-  [/разговор|встреч|чекин|чек-ин|check/i, 'checkin'],
+  [/разговор|встреч|чекин|чек-ин|check[ -]?in/i, 'checkin'],
 ];
 
 const KINDS: TaskKind[] = ['docs', 'safety', 'mentor_meeting', 'training', 'checkin', 'feedback', 'other'];

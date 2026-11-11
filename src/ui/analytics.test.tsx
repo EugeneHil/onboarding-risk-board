@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { DEMO_AS_OF, DEMO_EMPLOYEES } from '../data/demo';
 import { addDays } from '../domain/dates';
 import { earlyExitRates } from '../domain/attrition';
-import { makeEmployee } from '../test/factories';
+import { makeEmployee, makeTask } from '../test/factories';
 import { AnalyticsScreen } from './AnalyticsScreen';
 import { App } from './App';
 import { parseHash } from './useHashRoute';
@@ -149,5 +149,22 @@ describe('App routing to analytics', () => {
     render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
     const nav = screen.getByRole('navigation');
     expect(within(nav).getAllByRole('link')).toHaveLength(3);
+  });
+});
+
+describe('imported employee card without optional fields', () => {
+  it('does not print dangling commas or an empty manager', () => {
+    const e = makeEmployee({
+      fullName: 'Пустой Профиль',
+      location: '',
+      managerName: '',
+      hireDate: addDays(ASOF, -20),
+      tasks: [makeTask({ dueDay: 3 })],
+    });
+    window.location.hash = `#/employee/${e.id}`;
+    const { container } = render(<App employees={[e]} asOf={ASOF} />);
+    const text = container.textContent ?? '';
+    expect(text).not.toMatch(/, \./);
+    expect(text).not.toMatch(/Руководитель:\s*\./);
   });
 });

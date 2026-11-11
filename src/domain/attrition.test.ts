@@ -156,3 +156,17 @@ describe('survivalKnownAt', () => {
     expect(survivalKnownAt([], 5)).toBeUndefined();
   });
 });
+
+describe('buildHistoryBoard ordering with small groups', () => {
+  it('puts groups with enough data first, small groups after them, regardless of hidden rates', () => {
+    const big = [
+      ...Array.from({ length: 10 }, () => leaver(20, 200, { department: 'big' })),
+      ...Array.from({ length: 10 }, () => active(200, { department: 'big' })),
+    ]; // rate 0.5, enough data
+    const tinyRisky = [leaver(20, 200, { department: 'tiny' })]; // rate 1 but one hire
+    const a = active(10, { department: 'big', fullName: 'Из большой' });
+    const b = active(5, { department: 'tiny', fullName: 'Из малой' });
+    const names = buildHistoryBoard([...big, ...tinyRisky, a, b], ASOF).map((r) => r.employee.fullName);
+    expect(names).toEqual(['Из большой', 'Из малой']);
+  });
+});

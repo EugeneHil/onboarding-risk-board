@@ -41,9 +41,12 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
         </span>
       </header>
       <p className="muted">
-        {employee.position}, {departmentLabel(employee.department)}, {employee.location}. Принят{' '}
-        {formatRu(employee.hireDate)}, день {risk.tenureDay} из 90. Руководитель:{' '}
-        {employee.managerName}. Наставник: {employee.mentorName ?? 'не назначен'}.
+        {[employee.position, departmentLabel(employee.department), employee.location]
+          .filter((part) => part.trim() !== '')
+          .join(', ')}
+        . Принят {formatRu(employee.hireDate)}, день {risk.tenureDay} из 90.
+        {employee.managerName.trim() !== '' && ` Руководитель: ${employee.managerName}.`} Наставник:{' '}
+        {employee.mentorName ?? 'не назначен'}.
       </p>
 
       <div className="card-grid">

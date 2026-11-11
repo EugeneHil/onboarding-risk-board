@@ -282,3 +282,25 @@ describe('decodeText', () => {
     expect(decodeText(new Uint8Array([0xd4, 0xc8, 0xce]).buffer)).toBe('ФИО');
   });
 });
+
+describe('ids', () => {
+  it('does not let a generated id swallow a later row that really has that id', () => {
+    const { employees, issues } = importPeople(
+      [
+        { name: 'A', hire_date: '2026-01-10' },
+        { id: 'R-001', name: 'B', hire_date: '2026-01-11' },
+      ],
+      ASOF,
+    );
+    expect(issues).toEqual([]);
+    expect(employees.map((e) => e.id).sort()).toEqual(['R-001', 'R-002']);
+  });
+});
+
+describe('inferTaskKind precision', () => {
+  it('does not take feedback from a mentor for a mentor meeting, nor "checklist" for a check-in', () => {
+    expect(inferTaskKind('Обратная связь от наставника')).toBe('feedback');
+    expect(inferTaskKind('Checklist по складу')).toBe('other');
+    expect(inferTaskKind('Check-in на 2 неделе')).toBe('checkin');
+  });
+});

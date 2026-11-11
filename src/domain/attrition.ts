@@ -120,5 +120,10 @@ export function buildHistoryBoard(employees: Employee[], asOf: ISODate): History
       const g = rates.get(r.employee.department);
       return { ...r, groupRate: g?.rate, fewData: g?.fewData ?? true };
     })
-    .sort((a, b) => (b.groupRate ?? -1) - (a.groupRate ?? -1) || a.tenureDay - b.tenureDay);
+    .sort(
+      (a, b) =>
+        Number(a.fewData) - Number(b.fewData) || // small groups: no confident ranking, listed after
+        (a.fewData ? 0 : (b.groupRate ?? -1) - (a.groupRate ?? -1)) ||
+        a.tenureDay - b.tenureDay,
+    );
 }

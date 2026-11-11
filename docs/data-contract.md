@@ -26,6 +26,8 @@ CSV (`;`, `,` or tab separated, UTF-8, BOM tolerated) or JSON (an array of objec
 
 Dates: `YYYY-MM-DD`, `DD.MM.YYYY` (optionally with a time, as Excel writes it) or an ISO datetime; the date part is used. A leave date later than the "data as of" date is treated as a planned leave: the person is counted as still working and the row is reported as a note. Files saved by Russian Excel as "CSV (разделители — точка с запятой)" (windows-1251) are decoded automatically.
 
+Row numbers in import messages are spreadsheet rows (the header is row 1, blank lines are counted), so they match what you see in Excel; for JSON they are record numbers.
+
 ## Onboarding tasks table (optional)
 
 Rule-based risk is computed only for people who have at least one task in this table, and it assumes that **their whole chain is in the file**: a missing mentor meeting counts as "not held". People without any task are listed separately, ranked by the early-exit rate of their department.

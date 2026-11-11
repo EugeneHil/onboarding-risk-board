@@ -1,5 +1,7 @@
 export interface ParsedTable {
   rows: Array<Record<string, string>>;
+  /** Spreadsheet row of each data row (header = row 1, blank lines counted); absent for JSON. */
+  sourceRows?: number[];
   error?: string;
 }
 
@@ -110,15 +112,20 @@ function parseDelimited(text: string): ParsedTable {
   if (split.unclosed) {
     return { rows: [], error: 'В файле есть незакрытая кавычка: проверьте ячейки с текстом в кавычках' };
   }
-  const records = split.records.filter((r) => r.some((c) => c.trim() !== ''));
-  const header = records[0]?.map((h) => h.trim());
+  const numbered = split.records
+    .map((record, i) => ({ record, spreadsheetRow: i + 1 }))
+    .filter(({ record }) => record.some((c) => c.trim() !== ''));
+  const header = numbered[0]?.record.map((h) => h.trim());
   if (!header) return { rows: [], error: 'Файл пустой' };
-  const rows = records.slice(1).map((record) => {
+  const body = numbered.slice(1);
+  const rows = body.map(({ record }) => {
     const row: Record<string, string> = {};
     header.forEach((name, i) => {
       if (name !== '') row[name] = record[i] ?? '';
     });
     return row;
   });
-  return rows.length > 0 ? { rows } : { rows: [], error: NO_ROWS };
+  return rows.length > 0
+    ? { rows, sourceRows: body.map((b) => b.spreadsheetRow) }
+    : { rows: [], error: NO_ROWS };
 }

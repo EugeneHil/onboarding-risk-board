@@ -81,6 +81,27 @@ describe('AnalyticsScreen edge cases', () => {
   });
 });
 
+describe('survival chart label', () => {
+  it('states the Kaplan-Meier values of a hand-computed dataset', () => {
+    // 10 people: exits on day 10 and 30, one censored on day 20, seven still working at day 100
+    const at = (tenure: number, left: boolean) =>
+      makeEmployee({
+        hireDate: addDays(ASOF, -(left ? 200 : tenure)),
+        ...(left ? { status: 'left' as const, leaveDate: addDays(ASOF, -(200 - tenure)) } : {}),
+      });
+    const people = [
+      at(10, true),
+      at(30, true),
+      at(20, false),
+      ...Array.from({ length: 7 }, () => at(100, false)),
+    ];
+    render(<AnalyticsScreen employees={people} asOf={ASOF} />);
+    expect(screen.getByRole('img').getAttribute('aria-label')).toBe(
+      'Доля новичков, которые остаются в компании: на 30-й день 79%, на 90-й день 79%, на 180-й день нет данных',
+    );
+  });
+});
+
 describe('AnalyticsScreen does not state numbers nobody observed', () => {
   const few = [
     makeEmployee({ hireDate: addDays(ASOF, -200), status: 'left' as const, leaveDate: addDays(ASOF, -170) }),

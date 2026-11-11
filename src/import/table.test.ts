@@ -64,3 +64,11 @@ describe('parseTable unclosed quote', () => {
     expect(t.rows).toEqual([]);
   });
 });
+
+describe('parseTable source rows', () => {
+  it('reports the spreadsheet row of every data row, counting the header and blank lines', () => {
+    const t = parseTable('A;B\n\nx;y\n\nz;w\n');
+    expect(t.rows).toHaveLength(2);
+    expect(t.sourceRows).toEqual([3, 5]);
+  });
+});

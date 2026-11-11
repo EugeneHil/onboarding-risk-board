@@ -323,3 +323,17 @@ describe('namesakes in the tasks file', () => {
     expect(ok.employees.find((e) => e.id === 'B')?.tasks).toHaveLength(1);
   });
 });
+
+describe('source row numbers in issues', () => {
+  it('uses the given spreadsheet rows instead of the data row index', () => {
+    const rows = [
+      { name: 'A', hire_date: '2026-01-10' },
+      { name: '', hire_date: '2026-01-10' },
+    ];
+    expect(importPeople(rows, ASOF, [2, 5]).issues[0]?.row).toBe(5);
+    expect(importPeople(rows, ASOF).issues[0]?.row).toBe(2);
+    const people = importPeople([{ id: 'A', name: 'A', hire_date: '2026-01-10' }], ASOF).employees;
+    const t = importTasks([{ employee_id: 'ZZ', title: 'x', due_day: '1' }], people, [7]);
+    expect(t.issues[0]?.row).toBe(7);
+  });
+});

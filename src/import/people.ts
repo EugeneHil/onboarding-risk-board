@@ -23,7 +23,8 @@ export interface PeopleResult {
   issues: ImportIssue[];
 }
 
-export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
+/** `sourceRows`: spreadsheet row of each input row, used in messages (default: 1, 2, 3...). */
+export function importPeople(rows: Row[], asOf: ISODate, sourceRows?: number[]): PeopleResult {
   const employees: Employee[] = [];
   const issues: ImportIssue[] = [];
   const missing: string[] = [];
@@ -40,7 +41,7 @@ export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
   const explicit = new Set(rows.map((r) => pick(r, P.id)).filter((v) => v !== ''));
   let generated = 0;
   rows.forEach((row, i) => {
-    const n = i + 1;
+    const n = sourceRows?.[i] ?? i + 1;
     const fullName = pick(row, P.name);
     if (fullName === '') return void issues.push({ row: n, message: 'нет ФИО' });
     const hireRaw = pick(row, P.hire);
@@ -125,7 +126,11 @@ function responsibleFor(kind: TaskKind): OnboardingTask['responsible'] {
   return 'hr';
 }
 
-export function importTasks(rows: Row[], employees: Employee[]): PeopleResult {
+export function importTasks(
+  rows: Row[],
+  employees: Employee[],
+  sourceRows?: number[],
+): PeopleResult {
   const issues: ImportIssue[] = [];
   const copies = employees.map((e) => ({ ...e, tasks: [...e.tasks] }));
   const hasWho = hasColumn(rows, T.id) || hasColumn(rows, T.name);
@@ -149,7 +154,7 @@ export function importTasks(rows: Row[], employees: Employee[]): PeopleResult {
   }
   let counter = 0;
   rows.forEach((row, i) => {
-    const n = i + 1;
+    const n = sourceRows?.[i] ?? i + 1;
     const id = pick(row, T.id);
     const name = pick(row, T.name);
     const named = id === '' && name !== '' ? (byName.get(normName(name)) ?? []) : [];

@@ -59,7 +59,7 @@ describe('import screen', () => {
     await uploadPeople(PEOPLE_WITH_BAD_ROW);
     expect(await screen.findByText('Импортировано: 3')).toBeTruthy();
     expect(screen.getByText('Пропущено: 1')).toBeTruthy();
-    expect(screen.getByText(/Строка 4:.*нет ФИО/)).toBeTruthy();
+    expect(screen.getByText(/Строка 5:.*нет ФИО/)).toBeTruthy();
   });
 
   it('shows an error instead of crashing on an unusable file', async () => {
@@ -212,5 +212,27 @@ describe('department filter with people without a department', () => {
     const board = screen.getByRole('table', { name: 'Доска риска' });
     expect(within(board).getByText('Безотдела Иван')).toBeTruthy();
     expect(within(board).queryByText('Складов Пётр')).toBeNull();
+  });
+});
+
+describe('overlapping file loads', () => {
+  beforeEach(() => {
+    window.location.hash = '#/import';
+  });
+
+  it('keeps the result of the file chosen last even if an earlier, slower file finishes after it', async () => {
+    render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
+    const slow = csv('slow.csv', 'ФИО;Дата приёма\nМедленный Иван;01.10.2026\nВторой Человек;02.10.2026');
+    const bytes = new TextEncoder().encode('ФИО;Дата приёма\nМедленный Иван;01.10.2026\nВторой Человек;02.10.2026');
+    Object.defineProperty(slow, 'arrayBuffer', {
+      value: () => new Promise((r) => setTimeout(() => r(bytes.buffer), 150)),
+    });
+    const input = screen.getByLabelText(/Таблица сотрудников/);
+    await userEvent.upload(input, slow);
+    await userEvent.upload(input, csv('fast.csv', 'ФИО;Дата приёма\nБыстрый Пётр;03.10.2026'));
+    await screen.findByText('Импортировано: 1');
+    await new Promise((r) => setTimeout(r, 300));
+    expect(screen.getByText('Импортировано: 1')).toBeTruthy();
+    expect(screen.queryByText('Импортировано: 2')).toBeNull();
   });
 });

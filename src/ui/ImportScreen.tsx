@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Employee, ISODate } from '../domain/types';
 import { importPeople, importTasks, latestDate, type ImportIssue } from '../import/people';
 import { decodeText } from '../import/decode';
@@ -46,34 +46,49 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
   const [people, setPeople] = useState<ParsedTable | undefined>();
   const [tasks, setTasks] = useState<ParsedTable | undefined>();
   const [asOf, setAsOf] = useState<ISODate>('');
-  const [readError, setReadError] = useState<string | undefined>();
+  const [readErrors, setReadErrors] = useState<{ people?: string; tasks?: string }>({});
+  // Latest request per file slot: a slow earlier read must not overwrite a later choice.
+  const latest = useRef({ people: 0, tasks: 0 });
 
-  async function load(file: File | undefined, set: (t: ParsedTable | undefined) => void, isPeople: boolean) {
-    if (!file) return set(undefined);
+  async function load(
+    file: File | undefined,
+    slot: 'people' | 'tasks',
+    set: (t: ParsedTable | undefined) => void,
+  ) {
+    const mine = ++latest.current[slot];
+    const fresh = () => latest.current[slot] === mine;
+    const setError = (message?: string) =>
+      setReadErrors((prev) => ({ ...prev, [slot]: message }));
+    if (!file) {
+      set(undefined);
+      return setError(undefined);
+    }
     try {
       const table = parseTable(await readText(file));
+      if (!fresh()) return;
       set(table);
-      if (isPeople) {
-        const latest = latestDate(table.rows);
+      if (slot === 'people') {
+        const newest = latestDate(table.rows);
         const today = new Date().toISOString().slice(0, 10);
         // never default to a future date: planned leave dates must not move "today"
-        setAsOf(latest ? (latest < today ? latest : today) : '');
+        setAsOf(newest ? (newest < today ? newest : today) : '');
       }
-      setReadError(undefined);
+      setError(undefined);
     } catch {
+      if (!fresh()) return;
       set(undefined);
-      setReadError('Не удалось прочитать файл');
+      setError('Не удалось прочитать файл');
     }
   }
 
   const peopleResult = useMemo(
-    () => (people && !people.error && asOf ? importPeople(people.rows, asOf) : undefined),
+    () => (people && !people.error && asOf ? importPeople(people.rows, asOf, people.sourceRows) : undefined),
     [people, asOf],
   );
   const tasksResult = useMemo(
     () =>
       peopleResult && tasks && !tasks.error
-        ? importTasks(tasks.rows, peopleResult.employees)
+        ? importTasks(tasks.rows, peopleResult.employees, tasks.sourceRows)
         : undefined,
     [peopleResult, tasks],
   );
@@ -84,7 +99,7 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
   const fileIssue =
     people && !people.error ? importPeople(people.rows, '9999-12-31').issues.find((i) => i.row === 0) : undefined;
   const error =
-    readError ??
+    readErrors.people ??
     people?.error ??
     fileIssue?.message ??
     (people && !asOf ? 'Не удалось прочитать ни одной даты приёма или увольнения' : undefined);
@@ -105,7 +120,7 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
             type="file"
             accept=".csv,.tsv,.txt,.json,text/csv,application/json,text/plain"
             onChange={(e) => {
-              void load(e.target.files?.[0], setPeople, true);
+              void load(e.target.files?.[0], 'people', setPeople);
               e.target.value = '';
             }}
           />
@@ -116,7 +131,7 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
             type="file"
             accept=".csv,.tsv,.txt,.json,text/csv,application/json,text/plain"
             onChange={(e) => {
-              void load(e.target.files?.[0], setTasks, false);
+              void load(e.target.files?.[0], 'tasks', setTasks);
               e.target.value = '';
             }}
           />
@@ -137,9 +152,9 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
           {error}
         </p>
       )}
-      {tasks?.error && (
+      {(readErrors.tasks ?? tasks?.error) && (
         <p role="alert" className="error">
-          Файл задач: {tasks.error}
+          Файл задач: {readErrors.tasks ?? tasks?.error}
         </p>
       )}
       {peopleResult && (

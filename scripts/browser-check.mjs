@@ -229,7 +229,7 @@ const imported = await rowTexts();
 check('people + tasks: rule-based board with risk levels', imported.length > 0 && imported.some((t) => /Высокий|Средний|Низкий/.test(t)), `rows=${imported.length}`);
 await axeClean('imported board');
 await page.click('.nav a[href="#/analytics"]');
-await page.waitForSelector('table.rates');
+await page.waitForSelector('section[aria-label="Причины ухода"]'); // a table.rates may still belong to the previous screen
 check('analytics follows the imported data', await hasText('Магазин'));
 check('analytics: imported leave reasons shown, small sample says so', await page.$eval('section[aria-label="Причины ухода"]', (e) => e.textContent.includes('по собственному желанию') && e.textContent.includes('Мало данных')));
 await axeClean('analytics (imported)');

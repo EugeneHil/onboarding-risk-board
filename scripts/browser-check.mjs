@@ -187,6 +187,19 @@ await page.goto(BASE + '#/import', { waitUntil: 'networkidle0' });
 await page.reload({ waitUntil: 'networkidle0' });
 check('import: says files stay in the browser', await hasText('только в браузере'));
 await axeClean('import (empty)');
+// Form layout: three fields in one row, each label above its control (not glued to it), all fields aligned.
+const layout = await page.evaluate(() => {
+  const fields = [...document.querySelectorAll('.import-form label')].map((l) => {
+    const control = l.querySelector('input').getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(l.firstChild);
+    const text = range.getBoundingClientRect();
+    return { top: control.top, left: control.left, labelAbove: text.bottom <= control.top + 1 };
+  });
+  return { n: fields.length, sameRow: fields.every((f) => Math.abs(f.top - fields[0].top) <= 2), labelsAbove: fields.every((f) => f.labelAbove) };
+});
+check('import form: labels sit above their controls', layout.n === 3 && layout.labelsAbove, JSON.stringify(layout));
+check('import form: the three fields share one row', layout.sameRow, JSON.stringify(layout));
 const inputs = await page.$$('input[type=file]');
 await inputs[0].uploadFile(SAMPLE('people.csv'));
 await waitText('Импортировано: 12');

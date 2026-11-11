@@ -1,6 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DEMO_AS_OF, DEMO_EMPLOYEES } from '../data/demo';
+import { addDays } from '../domain/dates';
+import { makeEmployee, makeTask } from '../test/factories';
 import { App } from './App';
 
 const PEOPLE = [
@@ -90,10 +92,12 @@ describe('using imported data', () => {
     await screen.findByText(/Задачи: импортировано 2/);
     await userEvent.click(screen.getByRole('button', { name: 'Использовать эти данные' }));
 
-    const table = await screen.findByRole('table');
+    const table = await screen.findByRole('table', { name: 'Доска риска' });
     expect(within(table).getByText(/Иванов Иван/)).toBeTruthy();
-    expect(screen.queryByText(/нет задач адаптации/)).toBeNull();
-    expect(screen.getAllByText(/Высокий|Средний|Низкий/).length).toBeGreaterThan(0);
+    expect(within(table).getAllByText(/Высокий|Средний|Низкий/).length).toBeGreaterThan(0);
+    // the other imported person has no tasks: no risk for them, listed by department history
+    expect(within(table).queryByText(/Петрова Анна/)).toBeNull();
+    expect(screen.getByText(/нет задач адаптации/)).toBeTruthy();
   });
 
   it('reports a task for an unknown employee', async () => {
@@ -126,5 +130,73 @@ describe('using imported data', () => {
     const table = await screen.findByRole('table', { name: /подразделени/i });
     expect(within(table).getByText('Склад')).toBeTruthy();
     expect(within(table).queryByText('Магазин')).toBeTruthy();
+  });
+});
+
+describe('people without onboarding tasks', () => {
+  const ASOF = '2026-11-11';
+  const withTasks = makeEmployee({
+    id: 'T1',
+    fullName: 'Сзадачами Анна',
+    hireDate: addDays(ASOF, -20),
+    tasks: [makeTask({ kind: 'docs', dueDay: 3, status: 'open' })],
+  });
+  const without = makeEmployee({ id: 'N1', fullName: 'Безздач Борис', hireDate: addDays(ASOF, -10) });
+
+  beforeEach(() => {
+    window.location.hash = '';
+  });
+
+  it('gets no rule-based risk: listed in the history view, not on the risk board', () => {
+    render(<App employees={[withTasks, without]} asOf={ASOF} />);
+    const board = screen.getByRole('table', { name: /Доска риска/ });
+    expect(within(board).getByText('Сзадачами Анна')).toBeTruthy();
+    expect(within(board).queryByText('Безздач Борис')).toBeNull();
+    expect(screen.getByText(/нет задач адаптации/)).toBeTruthy();
+    expect(screen.getByText('Безздач Борис')).toBeTruthy();
+  });
+
+  it('has no risk card behind a direct link', () => {
+    window.location.hash = '#/employee/N1';
+    render(<App employees={[withTasks, without]} asOf={ASOF} />);
+    expect(screen.getByRole('heading', { level: 1, name: /Сотрудник не найден/ })).toBeTruthy();
+  });
+});
+
+describe('import problems that must be visible', () => {
+  beforeEach(() => {
+    window.location.hash = '#/import';
+  });
+
+  it('shows the missing-column message when the file has no readable hire date', async () => {
+    render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
+    await uploadPeople('ФИО;Должность\nИванов Иван;Кладовщик');
+    expect((await screen.findByRole('alert')).textContent).toMatch(/дата приёма/i);
+  });
+
+  it('shows a message when no hire date can be read at all', async () => {
+    render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
+    await uploadPeople('ФИО;Дата приёма\nИванов Иван;вчера');
+    expect((await screen.findByRole('alert')).textContent).toMatch(/дат/i);
+  });
+
+  it('never proposes a data date in the future', async () => {
+    render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
+    await uploadPeople('ФИО;Дата приёма;Дата увольнения\nИванов Иван;01.09.2026;01.01.2099');
+    await screen.findByText(/Импортировано/);
+    const value = (screen.getByLabelText(/Данные на дату/) as HTMLInputElement).value;
+    expect(value <= new Date().toISOString().slice(0, 10)).toBe(true);
+    expect(value).not.toBe('');
+  });
+
+  it('shows the imported dataset on the analytics screen (numbers that only the import has)', async () => {
+    render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
+    await uploadPeople();
+    await screen.findByText('Импортировано: 3');
+    await userEvent.click(screen.getByRole('button', { name: 'Использовать эти данные' }));
+    await userEvent.click(await screen.findByRole('link', { name: 'Аналитика' }));
+    const facts = await screen.findByRole('region', { name: 'Главные цифры' });
+    expect(within(facts).getByText('3')).toBeTruthy(); // 3 hires, the demo has 120
+    expect(screen.getByRole('table', { name: /должност/i }).textContent).toMatch(/Кассир/);
   });
 });

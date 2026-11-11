@@ -56,6 +56,14 @@ export function survivalAt(curve: SurvivalPoint[], day: number): number {
   return (curve[Math.min(day, last.day)] ?? last).survival;
 }
 
+/** Survival on a day, or undefined when nobody is left under observation then (nothing to estimate). */
+export function survivalKnownAt(curve: SurvivalPoint[], day: number): number | undefined {
+  const last = curve[curve.length - 1];
+  if (!last) return undefined;
+  const point = curve[Math.min(Math.max(day, 0), last.day)];
+  return point && point.atRisk > 0 ? point.survival : undefined;
+}
+
 export interface ExitRate {
   key: string;
   hires: number;

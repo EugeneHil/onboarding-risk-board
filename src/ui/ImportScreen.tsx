@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Employee, ISODate } from '../domain/types';
 import { importPeople, importTasks, latestDate, type ImportIssue } from '../import/people';
+import { decodeText } from '../import/decode';
 import { parseTable, type ParsedTable } from '../import/table';
 
 export interface Dataset {
@@ -16,6 +17,7 @@ interface Props {
 }
 
 function readText(file: File): Promise<string> {
+  if (typeof file.arrayBuffer === 'function') return file.arrayBuffer().then(decodeText);
   if (typeof file.text === 'function') return file.text();
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -38,7 +40,7 @@ function IssueList({ issues }: { issues: ImportIssue[] }) {
   );
 }
 
-const count = (issues: ImportIssue[]) => issues.filter((i) => i.row > 0).length;
+const count = (issues: ImportIssue[]) => issues.filter((i) => i.row > 0 && !i.kept).length;
 
 export function ImportScreen({ source, onUse, onReset }: Props) {
   const [people, setPeople] = useState<ParsedTable | undefined>();
@@ -51,7 +53,12 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
     try {
       const table = parseTable(await readText(file));
       set(table);
-      if (isPeople) setAsOf(latestDate(table.rows) ?? '');
+      if (isPeople) {
+        const latest = latestDate(table.rows);
+        const today = new Date().toISOString().slice(0, 10);
+        // never default to a future date: planned leave dates must not move "today"
+        setAsOf(latest ? (latest < today ? latest : today) : '');
+      }
       setReadError(undefined);
     } catch {
       set(undefined);
@@ -73,7 +80,14 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
 
   const employees = tasksResult?.employees ?? peopleResult?.employees ?? [];
   const canUse = employees.length > 0;
-  const error = readError ?? people?.error;
+  // The reasons a people file produces nothing must reach the screen, not vanish.
+  const fileIssue =
+    people && !people.error ? importPeople(people.rows, '9999-12-31').issues.find((i) => i.row === 0) : undefined;
+  const error =
+    readError ??
+    people?.error ??
+    fileIssue?.message ??
+    (people && !asOf ? 'Не удалось прочитать ни одной даты приёма или увольнения' : undefined);
 
   return (
     <div>
@@ -90,7 +104,10 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
           <input
             type="file"
             accept=".csv,.tsv,.txt,.json,text/csv,application/json,text/plain"
-            onChange={(e) => void load(e.target.files?.[0], setPeople, true)}
+            onChange={(e) => {
+              void load(e.target.files?.[0], setPeople, true);
+              e.target.value = '';
+            }}
           />
         </label>
         <label>
@@ -98,7 +115,10 @@ export function ImportScreen({ source, onUse, onReset }: Props) {
           <input
             type="file"
             accept=".csv,.tsv,.txt,.json,text/csv,application/json,text/plain"
-            onChange={(e) => void load(e.target.files?.[0], setTasks, false)}
+            onChange={(e) => {
+              void load(e.target.files?.[0], setTasks, false);
+              e.target.value = '';
+            }}
           />
         </label>
         <label>

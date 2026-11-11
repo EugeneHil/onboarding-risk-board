@@ -24,13 +24,15 @@ CSV (`;`, `,` or tab separated, UTF-8, BOM tolerated) or JSON (an array of objec
 | Id | `id`, `табельный номер`, `employee_id` | no (generated) |
 | Manager / mentor | `manager`, `руководитель` / `mentor`, `наставник` | no |
 
-Dates: `YYYY-MM-DD`, `DD.MM.YYYY` or an ISO datetime (the date part is used).
+Dates: `YYYY-MM-DD`, `DD.MM.YYYY` (optionally with a time, as Excel writes it) or an ISO datetime; the date part is used. A leave date later than the "data as of" date is treated as a planned leave: the person is counted as still working and the row is reported as a note. Files saved by Russian Excel as "CSV (разделители — точка с запятой)" (windows-1251) are decoded automatically.
 
 ## Onboarding tasks table (optional)
 
+Rule-based risk is computed only for people who have at least one task in this table, and it assumes that **their whole chain is in the file**: a missing mentor meeting counts as "not held". People without any task are listed separately, ranked by the early-exit rate of their department.
+
 | Meaning | Accepted headers | Required |
 |---|---|---|
-| Employee | `employee_id` (matches the people table `id`) or `full_name` | yes |
+| Employee | `employee_id` or `табельный номер` (matches the people table `id`), or `full_name`/`фио` (matched ignoring case and е/ё; a bare `id` column is ignored because it is usually the task's own id) | yes |
 | Title | `title`, `название`, `задача` | yes |
 | Due | `due_day` (days after hire) or `due_date` | yes |
 | Done on | `completed_on`, `дата выполнения` (empty means still open) | no |
@@ -38,7 +40,7 @@ Dates: `YYYY-MM-DD`, `DD.MM.YYYY` or an ISO datetime (the date part is used).
 
 ## Getting it out of Bitrix24
 
-`tasks.task.list` returns tasks with `title`, `createdDate`, `closedDate`, `responsibleId`, `deadline`. Typical mapping: the "hire" task closed date is the hire date, the "dismissal" task closed date is the leave date, onboarding tasks keep their own `deadline` and `closedDate`. Employee names and departments come from `user.get`. The app accepts the JSON response as is when the task list is under `result.tasks`, but a simple CSV built from these fields is the most reliable route.
+`tasks.task.list` returns tasks with `title`, `createdDate`, `closedDate`, `responsibleId`, `deadline`. Typical mapping: the "hire" task closed date is the hire date, the "dismissal" task closed date is the leave date, onboarding tasks keep their own `deadline` and `closedDate`. Employee names and departments come from `user.get`. The app does **not** read the raw `tasks.task.list` response: its field names (`deadline`, `closedDate`, `responsibleId`) are not mapped, and a task's own `id` is not an employee id. Convert it to the tables above (a plain CSV or a JSON array with the listed column names); a JSON array of such objects, or an object with the array under any single key, is accepted.
 
 ## Privacy
 

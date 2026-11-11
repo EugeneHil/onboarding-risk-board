@@ -12,7 +12,7 @@ export function BoardTable({ rows, onOpen }: BoardTableProps) {
   }
   return (
     <div className="table-wrap">
-      <table className="board">
+      <table className="board" aria-label="Доска риска">
         <thead>
           <tr>
             <th scope="col">Сотрудник</th>

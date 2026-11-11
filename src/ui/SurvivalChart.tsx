@@ -1,4 +1,4 @@
-import { survivalAt, type SurvivalPoint } from '../domain/attrition';
+import { survivalKnownAt, type SurvivalPoint } from '../domain/attrition';
 
 const W = 600;
 const H = 240;
@@ -11,15 +11,20 @@ export function SurvivalChart({ curve }: { curve: SurvivalPoint[] }) {
   const x = (day: number) => PAD.left + (day / horizon) * (W - PAD.left - PAD.right);
   const y = (v: number) => PAD.top + (1 - v) * (H - PAD.top - PAD.bottom);
 
-  // step line: hold the value until the next change
+  // step line over the observed period only: beyond it nobody is left to estimate from
+  const observed = curve.filter((p) => p.atRisk > 0);
   let d = '';
-  curve.forEach((p, i) => {
+  observed.forEach((p, i) => {
     d += i === 0 ? `M${x(p.day)},${y(p.survival)}` : ` H${x(p.day)} V${y(p.survival)}`;
   });
 
+  const at = (day: number) => {
+    const v = survivalKnownAt(curve, day);
+    return v === undefined ? 'нет данных' : pct(v);
+  };
   const label =
-    `Доля новичков, которые остаются в компании: на 30-й день ${pct(survivalAt(curve, 30))}, ` +
-    `на 90-й день ${pct(survivalAt(curve, 90))}, на 180-й день ${pct(survivalAt(curve, 180))}`;
+    `Доля новичков, которые остаются в компании: на 30-й день ${at(30)}, ` +
+    `на 90-й день ${at(90)}, на 180-й день ${at(180)}`;
   const xTicks = [0, 30, 60, 90, 120, 150, 180].filter((t) => t <= horizon);
 
   return (

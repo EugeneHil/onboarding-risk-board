@@ -1,6 +1,6 @@
 import { makeEmployee } from '../test/factories';
 import { addDays } from './dates';
-import { buildHistoryBoard, earlyExitRates, survivalAt, survivalCurve } from './attrition';
+import { buildHistoryBoard, earlyExitRates, survivalAt, survivalCurve, survivalKnownAt } from './attrition';
 import type { Employee } from './types';
 
 const ASOF = '2026-11-11';
@@ -145,5 +145,14 @@ describe('buildHistoryBoard', () => {
     const board = buildHistoryBoard([a, b], ASOF);
     expect(board.map((r) => r.employee.fullName)).toEqual(['B', 'A']);
     expect(board[0]).toMatchObject({ groupRate: undefined, fewData: true });
+  });
+});
+
+describe('survivalKnownAt', () => {
+  it('is undefined on days where nobody is left at risk, a number otherwise', () => {
+    const curve = survivalCurve([leaver(10, 200), active(40)], ASOF, 180);
+    expect(survivalKnownAt(curve, 30)).toBeCloseTo(0.5, 10);
+    expect(survivalKnownAt(curve, 90)).toBeUndefined();
+    expect(survivalKnownAt([], 5)).toBeUndefined();
   });
 });

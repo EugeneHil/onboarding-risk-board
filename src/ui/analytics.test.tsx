@@ -81,6 +81,33 @@ describe('AnalyticsScreen edge cases', () => {
   });
 });
 
+describe('AnalyticsScreen does not state numbers nobody observed', () => {
+  const few = [
+    makeEmployee({ hireDate: addDays(ASOF, -200), status: 'left' as const, leaveDate: addDays(ASOF, -170) }),
+    makeEmployee({ hireDate: addDays(ASOF, -100) }),
+    makeEmployee({ hireDate: addDays(ASOF, -45) }),
+  ];
+
+  it('shows a dash instead of 0% survival when nobody is observed at day 90', () => {
+    render(<AnalyticsScreen employees={few} asOf={ASOF} />);
+    const facts = screen.getByRole('region', { name: 'Главные цифры' });
+    expect(facts.textContent).not.toMatch(/0%/);
+    expect(facts.textContent).not.toMatch(/100%/);
+  });
+
+  it('says "нет данных" in the chart label for days beyond the observed period', () => {
+    render(<AnalyticsScreen employees={few} asOf={ASOF} />);
+    const label = screen.getByRole('img').getAttribute('aria-label') ?? '';
+    expect(label).toMatch(/180-й день нет данных/);
+  });
+
+  it('does not show the early-exit headline for a cohort under 10 hires', () => {
+    const { container } = render(<AnalyticsScreen employees={few} asOf={ASOF} />);
+    const tile = container.querySelectorAll('.fact')[3] as HTMLElement;
+    expect(tile.textContent).toMatch(/мало данных/);
+  });
+});
+
 describe('rules backtest block', () => {
   it('shows both flagged shares for the demo and says the check is circular on synthetic data', () => {
     render(<AnalyticsScreen employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} synthetic />);

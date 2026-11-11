@@ -7,7 +7,7 @@ export const PEOPLE_ALIASES = {
   name: ['full_name', 'name', 'фио', 'сотрудник'],
   position: ['position', 'должность'],
   department: ['department', 'подразделение', 'отдел'],
-  hire: ['hire_date', 'hired', 'дата приёма', 'дата приема', 'принят'],
+  hire: ['hire_date', 'hired', 'дата приёма', 'дата приема', 'дата найма', 'принят'],
   leave: ['leave_date', 'fired', 'дата увольнения', 'уволен'],
   reason: ['leave_reason', 'причина увольнения', 'причина'],
   id: ['id', 'табельный номер', 'employee_id'],
@@ -16,7 +16,8 @@ export const PEOPLE_ALIASES = {
 } as const;
 
 export const TASK_ALIASES = {
-  id: ['employee_id', 'id', 'табельный номер'],
+  // A bare `id` column in a task export is the task's own id, never the employee's.
+  id: ['employee_id', 'табельный номер'],
   name: ['full_name', 'name', 'фио', 'сотрудник'],
   title: ['title', 'название', 'задача'],
   dueDay: ['due_day', 'срок (дней)'],
@@ -63,7 +64,7 @@ export function parseDate(s: string): ISODate | undefined {
   const t = s.trim();
   let m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/.exec(t);
   if (m) return validIso(Number(m[1]), Number(m[2]), Number(m[3]));
-  m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(t);
+  m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?$/.exec(t);
   if (m) return validIso(Number(m[3]), Number(m[2]), Number(m[1]));
   return undefined;
 }

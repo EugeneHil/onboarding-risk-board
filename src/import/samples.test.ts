@@ -17,5 +17,10 @@ describe('downloadable sample files', () => {
     const t = importTasks(tasks.rows, p.employees);
     expect(t.issues).toEqual([]);
     expect(t.employees.reduce((n, e) => n + e.tasks.length, 0)).toBe(20);
+    // every person who has tasks has the full chain, so the rules do not invent a missing mentor meeting
+    for (const e of t.employees.filter((x) => x.tasks.length > 0)) {
+      expect(e.tasks.some((x) => x.kind === 'mentor_meeting')).toBe(true);
+      expect(e.tasks.some((x) => x.kind === 'checkin')).toBe(true);
+    }
   });
 });

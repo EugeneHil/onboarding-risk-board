@@ -9,9 +9,9 @@ const ASOF = '2026-11-11';
 const hired = (n: number) => addDays(ASOF, -n);
 
 const FIXTURE = [
-  makeEmployee({ id: 'a', fullName: 'Иванов Иван', department: 'warehouse', hireDate: hired(20) }),
-  makeEmployee({ id: 'b', fullName: 'Петров Пётр', department: 'store', hireDate: hired(40) }),
-  makeEmployee({ id: 'c', fullName: 'Сидорова Анна', department: 'store', hireDate: hired(3) }),
+  makeEmployee({ id: 'a', fullName: 'Иванов Иван', department: 'warehouse', hireDate: hired(20), tasks: [makeTask({ dueDay: 30 })] }),
+  makeEmployee({ id: 'b', fullName: 'Петров Пётр', department: 'store', hireDate: hired(40), tasks: [makeTask({ dueDay: 30 })] }),
+  makeEmployee({ id: 'c', fullName: 'Сидорова Анна', department: 'store', hireDate: hired(3), tasks: [makeTask({ dueDay: 30 })] }),
   makeEmployee({
     id: 'd',
     fullName: 'Козлов Олег',

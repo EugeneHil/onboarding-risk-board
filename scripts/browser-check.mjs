@@ -188,7 +188,7 @@ await clickButton('Вернуться к демо');
 await page.waitForSelector('table.board');
 check('reset returns to the demo', (await page.$eval('.banner', (e) => e.textContent)).includes('Демо-данные'));
 
-// The same axe checks in the light colour scheme (the checks above ran in whatever Chrome defaults to).
+// The main screens again in both colour schemes (the axe checks above ran in Chrome's default scheme).
 for (const scheme of ['light', 'dark']) {
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: scheme }]);
   for (const hash of ['#/', '#/analytics', '#/import']) {

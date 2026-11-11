@@ -32,10 +32,17 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
     source: 'demo',
   });
   const { employees, asOf, source } = dataset;
-  const hasTasks = useMemo(() => employees.some((e) => e.tasks.length > 0), [employees]);
+  // Rule-based risk only for people who have onboarding tasks; the rest would get an invented
+  // "no mentor meeting". They are listed by their department's history instead.
+  const withTasks = useMemo(() => employees.filter((e) => e.tasks.length > 0), [employees]);
+  const hasTasks = withTasks.length > 0;
   const history = useMemo(
-    () => (hasTasks ? [] : buildHistoryBoard(employees, asOf)),
-    [employees, asOf, hasTasks],
+    () =>
+      buildHistoryBoard(
+        employees.filter((e) => e.tasks.length === 0),
+        asOf,
+      ),
+    [employees, asOf],
   );
 
   const useDataset = (d: Dataset) => {
@@ -49,7 +56,7 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
   const [level, setLevel] = useState<RiskLevel | null>(null);
   const [query, setQuery] = useState('');
 
-  const board = useMemo(() => buildBoard(employees, asOf), [employees, asOf]);
+  const board = useMemo(() => buildBoard(withTasks, asOf), [withTasks, asOf]);
   const departments = useMemo(() => departmentsOf(employees), [employees]);
   const leavers = useMemo(
     () =>
@@ -170,6 +177,7 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
         </label>
       </div>
       <BoardTable rows={visible} onOpen={(id) => navigate(`#/employee/${encodeURIComponent(id)}`)} />
+          {history.length > 0 && <HistoryBoard rows={history} />}
         </>
       )}
       <p className="footnote">

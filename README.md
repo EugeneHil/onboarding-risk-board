@@ -66,5 +66,5 @@ docs/superpowers/plans/   the implementation plan this was built from
 - No real Bitrix24 integration (needs a webhook or an app and access to the real task data).
 - Rule weights and thresholds are untested against real attrition; they need to be checked against the company's own history of leavers.
 - No authentication or roles, no notifications.
-- Accessibility is checked automatically with axe-core (0 violations on every screen, light and dark scheme, desktop and phone width), which finds only part of the problems. Not tested in Safari or Firefox or with real screen readers.
+- Accessibility is checked automatically with axe-core (0 violations on every screen in Chrome's default dark scheme, plus the board, analytics and import in the light scheme, desktop and phone width), which finds only part of the problems. Not tested in Safari or Firefox or with real screen readers.
 - The analytics on the demo is synthetic and says nothing about the company; it needs the company's own export. The import was only tried on generated files, not on a real Bitrix24 export.

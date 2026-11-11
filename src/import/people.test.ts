@@ -1,4 +1,5 @@
 import { importPeople, importTasks, inferTaskKind } from './people';
+import { decodeText } from './decode';
 import { parseDate } from './fields';
 
 const ASOF = '2026-11-11';
@@ -234,5 +235,50 @@ describe('importTasks', () => {
   it('reports one issue when required columns are missing', () => {
     const { issues } = importTasks([{ foo: 'bar' }], people());
     expect(issues).toHaveLength(1);
+  });
+});
+
+describe('import robustness', () => {
+  it('accepts a date with a time part from Excel', () => {
+    expect(parseDate('01.09.2026 0:00')).toBe('2026-09-01');
+    expect(parseDate('01.09.2026 13:45:10')).toBe('2026-09-01');
+  });
+
+  it('understands the "Дата найма" header', () => {
+    const { employees } = importPeople([{ 'ФИО': 'A', 'Дата найма': '01.09.2026' }], ASOF);
+    expect(employees).toHaveLength(1);
+  });
+
+  it('keeps a leaver whose leave date is after the data date as a working employee and says so', () => {
+    const { employees, issues } = importPeople(
+      [{ name: 'A', hire_date: '2026-09-01', leave_date: '2026-12-30' }],
+      ASOF,
+    );
+    expect(employees[0]?.status).toBe('active');
+    expect(employees[0]?.leaveDate).toBeUndefined();
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({ row: 1, kept: true });
+  });
+
+  it('does not match tasks by a bare "id" column (that is the task id, not the employee id)', () => {
+    const people = importPeople(
+      [
+        { id: '7', name: 'Анна Первая', hire_date: '2026-10-01' },
+        { id: '8', name: 'Борис Второй', hire_date: '2026-10-01' },
+      ],
+      ASOF,
+    ).employees;
+    const { employees } = importTasks([{ id: '7', 'ФИО': 'Борис Второй', title: 'Документы', due_day: '1' }], people);
+    expect(employees.find((e) => e.id === '8')?.tasks).toHaveLength(1);
+    expect(employees.find((e) => e.id === '7')?.tasks).toHaveLength(0);
+  });
+});
+
+describe('decodeText', () => {
+  it('reads UTF-8 and falls back to windows-1251 (Excel "CSV" export)', () => {
+    const utf8 = new TextEncoder().encode('ФИО;Дата');
+    expect(decodeText(utf8.buffer)).toBe('ФИО;Дата');
+    // "ФИО" in windows-1251: D4 C8 CE
+    expect(decodeText(new Uint8Array([0xd4, 0xc8, 0xce]).buffer)).toBe('ФИО');
   });
 });

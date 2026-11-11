@@ -14,6 +14,8 @@ export interface ImportIssue {
   /** 1-based data row number (the header is not counted). */
   row: number;
   message: string;
+  /** The row was kept (with a correction), not skipped. */
+  kept?: boolean;
 }
 
 export interface PeopleResult {
@@ -62,6 +64,12 @@ export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
     if (leaveDate && leaveDate < hireDate) {
       return void issues.push({ row: n, message: 'увольнение раньше приёма' });
     }
+    let keptNote: string | undefined;
+    let leave = leaveDate;
+    if (leave && leave > asOf) {
+      keptNote = 'увольнение позже даты данных: считается работающим';
+      leave = undefined;
+    }
     const explicitId = pick(row, P.id);
     if (explicitId !== '' && seen.has(explicitId)) {
       return void issues.push({ row: n, message: `повторяющийся id «${explicitId}»` });
@@ -85,11 +93,12 @@ export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
       hireDate,
       managerName: pick(row, P.manager),
       ...(mentor ? { mentorName: mentor } : {}),
-      status: leaveDate ? 'left' : 'active',
-      ...(leaveDate ? { leaveDate } : {}),
-      ...(leaveDate && reason ? { leaveReason: reason } : {}),
+      status: leave ? 'left' : 'active',
+      ...(leave ? { leaveDate: leave } : {}),
+      ...(leave && reason ? { leaveReason: reason } : {}),
       tasks: [],
     });
+    if (keptNote) issues.push({ row: n, message: keptNote, kept: true });
   });
   return { employees, issues };
 }

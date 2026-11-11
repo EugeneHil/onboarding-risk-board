@@ -4,7 +4,7 @@ import { DEMO_AS_OF, DEMO_EMPLOYEES } from '../data/demo';
 import { buildBitrixTask } from '../domain/bitrix';
 import { addDays } from '../domain/dates';
 import { evaluateRisk } from '../domain/rules';
-import { makeEmployee } from '../test/factories';
+import { makeEmployee, makeTask } from '../test/factories';
 import { App } from './App';
 import { BitrixModal } from './BitrixModal';
 
@@ -87,7 +87,9 @@ describe('leavers chart', () => {
       status: 'left',
       leaveDate: addDays('2026-01-01', tenure),
     });
+  // one task somewhere: a dataset without any onboarding tasks shows the history view instead
   const FIXTURE = [leaver('warehouse', 10), leaver('store', 40), leaver('store', 100)];
+  FIXTURE[0] = { ...FIXTURE[0]!, tasks: [makeTask()] };
   const bars = () =>
     within(screen.getByRole('figure'))
       .getAllByRole('listitem')

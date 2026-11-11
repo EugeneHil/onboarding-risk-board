@@ -39,32 +39,32 @@ export function importPeople(rows: Row[], asOf: ISODate): PeopleResult {
   rows.forEach((row, i) => {
     const n = i + 1;
     const fullName = pick(row, P.name);
-    if (fullName === '') return void issues.push({ row: n, message: 'Строка пропущена: нет ФИО' });
+    if (fullName === '') return void issues.push({ row: n, message: 'нет ФИО' });
     const hireRaw = pick(row, P.hire);
     const hireDate = parseDate(hireRaw);
     if (!hireDate) {
       return void issues.push({
         row: n,
-        message: `Строка пропущена: не удалось прочитать дату приёма «${hireRaw}»`,
+        message: `не удалось прочитать дату приёма «${hireRaw}»`,
       });
     }
     if (hireDate > asOf) {
-      return void issues.push({ row: n, message: 'Строка пропущена: дата приёма позже текущей даты' });
+      return void issues.push({ row: n, message: 'дата приёма позже текущей даты' });
     }
     const leaveRaw = pick(row, P.leave);
     const leaveDate = leaveRaw === '' ? undefined : parseDate(leaveRaw);
     if (leaveRaw !== '' && !leaveDate) {
       return void issues.push({
         row: n,
-        message: `Строка пропущена: не удалось прочитать дату увольнения «${leaveRaw}»`,
+        message: `не удалось прочитать дату увольнения «${leaveRaw}»`,
       });
     }
     if (leaveDate && leaveDate < hireDate) {
-      return void issues.push({ row: n, message: 'Строка пропущена: увольнение раньше приёма' });
+      return void issues.push({ row: n, message: 'увольнение раньше приёма' });
     }
     const explicitId = pick(row, P.id);
     if (explicitId !== '' && seen.has(explicitId)) {
-      return void issues.push({ row: n, message: `Строка пропущена: повторяющийся id «${explicitId}»` });
+      return void issues.push({ row: n, message: `повторяющийся id «${explicitId}»` });
     }
     let id = explicitId;
     if (id === '') {
@@ -140,10 +140,10 @@ export function importTasks(rows: Row[], employees: Employee[]): PeopleResult {
     const name = pick(row, T.name);
     const owner = (id !== '' ? byId.get(id) : undefined) ?? (name !== '' ? byName.get(normName(name)) : undefined);
     if (!owner) {
-      return void issues.push({ row: n, message: `Задача пропущена: сотрудник «${id || name}» не найден` });
+      return void issues.push({ row: n, message: `сотрудник «${id || name}» не найден` });
     }
     const title = pick(row, T.title);
-    if (title === '') return void issues.push({ row: n, message: 'Задача пропущена: нет названия' });
+    if (title === '') return void issues.push({ row: n, message: 'нет названия' });
 
     let dueDay: number | undefined;
     const dayRaw = pick(row, T.dueDay);
@@ -151,16 +151,16 @@ export function importTasks(rows: Row[], employees: Employee[]): PeopleResult {
       dueDay = Number(dayRaw);
     } else {
       const due = parseDate(pick(row, T.dueDate));
-      if (!due) return void issues.push({ row: n, message: 'Задача пропущена: не указан или не читается срок' });
+      if (!due) return void issues.push({ row: n, message: 'не указан или не читается срок' });
       dueDay = daysBetween(owner.hireDate, due);
       if (dueDay < 0) {
-        return void issues.push({ row: n, message: 'Задача пропущена: срок раньше даты приёма' });
+        return void issues.push({ row: n, message: 'срок раньше даты приёма' });
       }
     }
     const doneRaw = pick(row, T.done);
     const completedOn = doneRaw === '' ? undefined : parseDate(doneRaw);
     if (doneRaw !== '' && !completedOn) {
-      return void issues.push({ row: n, message: `Задача пропущена: не читается дата выполнения «${doneRaw}»` });
+      return void issues.push({ row: n, message: `не читается дата выполнения «${doneRaw}»` });
     }
     const kindRaw = pick(row, T.kind) as TaskKind;
     const kind = KINDS.includes(kindRaw) ? kindRaw : inferTaskKind(title);
@@ -176,4 +176,16 @@ export function importTasks(rows: Row[], employees: Employee[]): PeopleResult {
     });
   });
   return { employees: copies, issues };
+}
+
+/** Latest hire or leave date found in the rows: a sensible default for "data as of". */
+export function latestDate(rows: Row[]): ISODate | undefined {
+  let latest: ISODate | undefined;
+  for (const row of rows) {
+    for (const aliases of [P.hire, P.leave]) {
+      const d = parseDate(pick(row, aliases));
+      if (d && (!latest || d > latest)) latest = d;
+    }
+  }
+  return latest;
 }

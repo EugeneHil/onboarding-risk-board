@@ -52,8 +52,8 @@ describe('board screen', () => {
 
   it('treats "е" and "ё" as the same letter in search', async () => {
     const withYo = [
-      makeEmployee({ id: 'y', fullName: 'Семёнова Анна', hireDate: hired(20) }),
-      makeEmployee({ id: 'z', fullName: 'Петров Пётр', hireDate: hired(20) }),
+      makeEmployee({ id: 'y', fullName: 'Семёнова Анна', hireDate: hired(20), tasks: [makeTask()] }),
+      makeEmployee({ id: 'z', fullName: 'Петров Пётр', hireDate: hired(20), tasks: [makeTask()] }),
     ];
     render(<App employees={withYo} asOf={ASOF} />);
     const box = screen.getByRole('searchbox', { name: 'Поиск' });

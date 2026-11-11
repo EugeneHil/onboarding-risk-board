@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { buildHistoryBoard } from '../domain/attrition';
 import { buildBoard } from '../domain/board';
 import { formatRu } from '../domain/dates';
 import { leaversByTenure } from '../domain/stats';
@@ -8,6 +9,8 @@ import { EmployeeCard } from './EmployeeCard';
 import { departmentLabel, departmentsOf } from './labels';
 import { AnalyticsScreen } from './AnalyticsScreen';
 import { Nav } from './Nav';
+import { HistoryBoard } from './HistoryBoard';
+import { ImportScreen, type Dataset } from './ImportScreen';
 import { Summary } from './Summary';
 import { useHashRoute } from './useHashRoute';
 
@@ -21,8 +24,27 @@ const SUFFIX = 'Адаптация новичков';
 
 const norm = (s: string) => s.toLocaleLowerCase('ru').replace(/ё/g, 'е');
 
-export function App({ employees, asOf }: AppProps) {
+export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
   const { route, navigate } = useHashRoute();
+  const [dataset, setDataset] = useState<Dataset>({
+    employees: demoEmployees,
+    asOf: demoAsOf,
+    source: 'demo',
+  });
+  const { employees, asOf, source } = dataset;
+  const hasTasks = useMemo(() => employees.some((e) => e.tasks.length > 0), [employees]);
+  const history = useMemo(
+    () => (hasTasks ? [] : buildHistoryBoard(employees, asOf)),
+    [employees, asOf, hasTasks],
+  );
+
+  const useDataset = (d: Dataset) => {
+    setDataset(d);
+    setDepartment('');
+    setLevel(null);
+    setQuery('');
+    navigate('#/');
+  };
   const [department, setDepartment] = useState('');
   const [level, setLevel] = useState<RiskLevel | null>(null);
   const [query, setQuery] = useState('');
@@ -55,7 +77,9 @@ export function App({ employees, asOf }: AppProps) {
 
   const banner = (
     <div className="banner" role="note">
-      Демо-данные: все люди выдуманные. Данные на {formatRu(asOf)}.
+      {source === 'demo'
+        ? `Демо-данные: все люди выдуманные. Данные на ${formatRu(asOf)}.`
+        : `Загруженные данные: обработаны в вашем браузере. Данные на ${formatRu(asOf)}.`}
     </div>
   );
 
@@ -74,7 +98,11 @@ export function App({ employees, asOf }: AppProps) {
       <div className="app">
         {banner}
         <Nav active="import" />
-        <h1>Свои данные</h1>
+        <ImportScreen
+          source={source}
+          onUse={useDataset}
+          onReset={() => useDataset({ employees: demoEmployees, asOf: demoAsOf, source: 'demo' })}
+        />
       </div>
     );
   }
@@ -111,6 +139,10 @@ export function App({ employees, asOf }: AppProps) {
           прозрачные: у каждого балла есть причина.
         </p>
       </header>
+      {!hasTasks ? (
+        <HistoryBoard rows={history} />
+      ) : (
+        <>
       <Summary rows={scoped} leavers={leavers} activeLevel={level} onLevel={setLevel} />
       <div className="filters">
         <label>
@@ -138,6 +170,8 @@ export function App({ employees, asOf }: AppProps) {
         </label>
       </div>
       <BoardTable rows={visible} onOpen={(id) => navigate(`#/employee/${encodeURIComponent(id)}`)} />
+        </>
+      )}
       <p className="footnote">
         Допущение: в Битрикс24 есть цепочка задач адаптации (встреча с наставником, разговор
         руководителя и т. д.). В задании сказано только про задачи приёма и увольнения, поэтому

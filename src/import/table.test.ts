@@ -56,3 +56,11 @@ describe('parseTable (JSON)', () => {
     expect(parseTable('{"a":1}').error).toMatch(/список/i);
   });
 });
+
+describe('parseTable unclosed quote', () => {
+  it('reports an error instead of silently merging the rest of the file into one cell', () => {
+    const t = parseTable('name;note\nA;"unclosed\nB;ok');
+    expect(t.error).toMatch(/кавыч/);
+    expect(t.rows).toEqual([]);
+  });
+});

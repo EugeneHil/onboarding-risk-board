@@ -22,6 +22,9 @@ export interface AppProps {
 const BOARD_TITLE = 'Адаптация новичков: доска риска';
 const SUFFIX = 'Адаптация новичков';
 
+// '' means "all", so people without a department get their own option value.
+const NO_DEPARTMENT = '\u0000none';
+
 const norm = (s: string) => s.toLocaleLowerCase('ru').replace(/ё/g, 'е');
 
 export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
@@ -55,15 +58,16 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
   const [department, setDepartment] = useState('');
   const [level, setLevel] = useState<RiskLevel | null>(null);
   const [query, setQuery] = useState('');
+  const deptValue = department === NO_DEPARTMENT ? '' : department;
 
   const board = useMemo(() => buildBoard(withTasks, asOf), [withTasks, asOf]);
   const departments = useMemo(() => departmentsOf(employees), [employees]);
   const leavers = useMemo(
     () =>
       leaversByTenure(
-        department === '' ? employees : employees.filter((e) => e.department === department),
+        department === '' ? employees : employees.filter((e) => e.department === deptValue),
       ),
-    [employees, department],
+    [employees, department, deptValue],
   );
   const openRow = route.name === 'employee' ? board.find((r) => r.employee.id === route.id) : undefined;
   const openName = openRow?.employee.fullName;
@@ -76,7 +80,7 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
 
   const scoped = board.filter(
     ({ employee }) =>
-      (department === '' || employee.department === department) &&
+      (department === '' || employee.department === deptValue) &&
       (query.trim() === '' ||
         norm(`${employee.fullName} ${employee.position}`).includes(norm(query.trim()))),
   );
@@ -160,7 +164,7 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
           >
             <option value="">Все</option>
             {departments.map((d) => (
-              <option key={d} value={d}>
+              <option key={d} value={d === '' ? NO_DEPARTMENT : d}>
                 {departmentLabel(d)}
               </option>
             ))}

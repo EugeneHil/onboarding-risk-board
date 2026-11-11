@@ -142,13 +142,26 @@ export function importTasks(rows: Row[], employees: Employee[]): PeopleResult {
     };
   }
   const byId = new Map(copies.map((e) => [e.id, e]));
-  const byName = new Map(copies.map((e) => [normName(e.fullName), e]));
+  const byName = new Map<string, Employee[]>();
+  for (const e of copies) {
+    const key = normName(e.fullName);
+    byName.set(key, [...(byName.get(key) ?? []), e]);
+  }
   let counter = 0;
   rows.forEach((row, i) => {
     const n = i + 1;
     const id = pick(row, T.id);
     const name = pick(row, T.name);
-    const owner = (id !== '' ? byId.get(id) : undefined) ?? (name !== '' ? byName.get(normName(name)) : undefined);
+    const named = id === '' && name !== '' ? (byName.get(normName(name)) ?? []) : [];
+    if (named.length > 1) {
+      return void issues.push({
+        row: n,
+        message: `несколько сотрудников с ФИО «${name}»: укажите employee_id`,
+      });
+    }
+    const owner = (id !== '' ? byId.get(id) : undefined) ?? named[0] ?? (id !== '' && name !== ''
+        ? (byName.get(normName(name)) ?? []).filter(() => (byName.get(normName(name)) ?? []).length === 1)[0]
+        : undefined);
     if (!owner) {
       return void issues.push({ row: n, message: `сотрудник «${id || name}» не найден` });
     }

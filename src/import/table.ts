@@ -61,7 +61,7 @@ function sniffDelimiter(text: string): string {
   return (counts[best] ?? 0) > 0 ? best : ',';
 }
 
-function splitRecords(text: string, delimiter: string): string[][] {
+function splitRecords(text: string, delimiter: string): { records: string[][]; unclosed: boolean } {
   const records: string[][] = [];
   let record: string[] = [];
   let cell = '';
@@ -102,13 +102,15 @@ function splitRecords(text: string, delimiter: string): string[][] {
     }
   }
   if (cell !== '' || record.length > 0) endRecord();
-  return records;
+  return { records, unclosed: inQuotes };
 }
 
 function parseDelimited(text: string): ParsedTable {
-  const records = splitRecords(text, sniffDelimiter(text)).filter((r) =>
-    r.some((c) => c.trim() !== ''),
-  );
+  const split = splitRecords(text, sniffDelimiter(text));
+  if (split.unclosed) {
+    return { rows: [], error: 'В файле есть незакрытая кавычка: проверьте ячейки с текстом в кавычках' };
+  }
+  const records = split.records.filter((r) => r.some((c) => c.trim() !== ''));
   const header = records[0]?.map((h) => h.trim());
   if (!header) return { rows: [], error: 'Файл пустой' };
   const rows = records.slice(1).map((record) => {

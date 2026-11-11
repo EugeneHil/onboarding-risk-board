@@ -200,3 +200,17 @@ describe('import problems that must be visible', () => {
     expect(screen.getByRole('table', { name: /должност/i }).textContent).toMatch(/Кассир/);
   });
 });
+
+describe('department filter with people without a department', () => {
+  it('"Не указано" shows only them, not everyone', async () => {
+    const ASOF2 = '2026-11-11';
+    const mk = (name: string, department: string) =>
+      makeEmployee({ fullName: name, department, hireDate: addDays(ASOF2, -20), tasks: [makeTask({ dueDay: 3 })] });
+    window.location.hash = '';
+    render(<App employees={[mk('Безотдела Иван', ''), mk('Складов Пётр', 'warehouse')]} asOf={ASOF2} />);
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Подразделение' }), 'Не указано');
+    const board = screen.getByRole('table', { name: 'Доска риска' });
+    expect(within(board).getByText('Безотдела Иван')).toBeTruthy();
+    expect(within(board).queryByText('Складов Пётр')).toBeNull();
+  });
+});

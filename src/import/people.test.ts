@@ -304,3 +304,22 @@ describe('inferTaskKind precision', () => {
     expect(inferTaskKind('Check-in на 2 неделе')).toBe('checkin');
   });
 });
+
+describe('namesakes in the tasks file', () => {
+  it('refuses to guess between two employees with the same name and asks for an id', () => {
+    const people = importPeople(
+      [
+        { id: 'A', name: 'Иван Иванов', hire_date: '2026-10-01' },
+        { id: 'B', name: 'Иван Иванов', hire_date: '2026-10-05' },
+      ],
+      ASOF,
+    ).employees;
+    const { employees, issues } = importTasks([{ 'ФИО': 'Иван Иванов', title: 'Документы', due_day: '1' }], people);
+    expect(employees.every((e) => e.tasks.length === 0)).toBe(true);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toMatch(/employee_id/);
+    // by id it still works
+    const ok = importTasks([{ employee_id: 'B', title: 'Документы', due_day: '1' }], people);
+    expect(ok.employees.find((e) => e.id === 'B')?.tasks).toHaveLength(1);
+  });
+});

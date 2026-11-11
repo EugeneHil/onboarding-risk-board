@@ -5,6 +5,8 @@ import { formatRu } from '../domain/dates';
 import { leaversByTenure } from '../domain/stats';
 import type { Employee, ISODate, RiskLevel } from '../domain/types';
 import { BoardTable } from './BoardTable';
+import { boardToCsv } from './exportCsv';
+import { downloadText } from './download';
 import { EmployeeCard } from './EmployeeCard';
 import { departmentLabel, departmentsOf } from './labels';
 import { AnalyticsScreen } from './AnalyticsScreen';
@@ -179,6 +181,11 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
+        {visible.length > 0 && (
+          <button type="button" className="secondary" onClick={() => downloadText('onboarding-risk-board.csv', boardToCsv(visible))}>
+            Скачать список (CSV)
+          </button>
+        )}
       </div>
       <BoardTable rows={visible} onOpen={(id) => navigate(`#/employee/${encodeURIComponent(id)}`)} />
           {history.length > 0 && <HistoryBoard rows={history} />}

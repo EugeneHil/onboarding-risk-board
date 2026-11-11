@@ -91,3 +91,39 @@ describe('board screen', () => {
     expect(bodyRows()).toHaveLength(all);
   });
 });
+
+describe('CSV export of the board', () => {
+  const readBlob = (blob: Blob) =>
+    new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsText(blob);
+    });
+
+  const stubDownload = () => {
+    const blobs: Blob[] = [];
+    URL.createObjectURL = (b: Blob | MediaSource) => {
+      blobs.push(b as Blob);
+      return 'blob:test';
+    };
+    URL.revokeObjectURL = () => {};
+    return blobs;
+  };
+
+  it('downloads exactly the rows that are visible after filtering', async () => {
+    const blobs = stubDownload();
+    render(<App employees={FIXTURE} asOf={ASOF} />);
+    await userEvent.type(screen.getByRole('searchbox'), 'Козлов');
+    await userEvent.click(screen.getByRole('button', { name: /Скачать список/ }));
+    expect(blobs).toHaveLength(1);
+    const text = await readBlob(blobs[0]!);
+    expect(text).toContain('Козлов Олег');
+    expect(text).not.toContain('Иванов Иван');
+  });
+
+  it('offers no download when nobody is shown', async () => {
+    render(<App employees={FIXTURE} asOf={ASOF} />);
+    await userEvent.type(screen.getByRole('searchbox'), 'нет такого');
+    expect(screen.queryByRole('button', { name: /Скачать список/ })).toBeNull();
+  });
+});

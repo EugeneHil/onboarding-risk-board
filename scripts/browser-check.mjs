@@ -65,6 +65,21 @@ check('banner says demo data', (await page.$eval('.banner', (e) => e.textContent
 check('title is the H1', (await page.$eval('h1', (e) => e.textContent)) === 'Новички: кто в зоне риска');
 const all = await rowTexts();
 check('board has rows', all.length >= 20, `rows=${all.length}`);
+// The CSV export hands the visible rows to the browser as a Blob download; read the Blob instead of a file.
+const csvText = await page.evaluate(async () => {
+  let blob;
+  const original = URL.createObjectURL;
+  URL.createObjectURL = (b) => ((blob = b), original.call(URL, b));
+  const button = [...document.querySelectorAll('button')].find((b) => b.textContent.includes('Скачать список'));
+  button?.click();
+  URL.createObjectURL = original;
+  if (!blob) return { text: '', bom: false };
+  const head = new Uint8Array(await blob.slice(0, 3).arrayBuffer());
+  return { text: await blob.text(), bom: head[0] === 0xef && head[1] === 0xbb && head[2] === 0xbf };
+});
+// Blob.text() strips the UTF-8 BOM while decoding, so the BOM is checked on the raw bytes above.
+const csvLines = csvText.text.split('\r\n');
+check('csv export: BOM, header and one line per visible row', csvText.bom && csvText.text.startsWith('Сотрудник;') && csvLines.length === all.length + 1, `lines=${csvLines.length}`);
 check('first row is high risk', all[0].includes('Высокий'));
 await shot(page, '01-board');
 await axeClean('board');

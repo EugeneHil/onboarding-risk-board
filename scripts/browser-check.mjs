@@ -140,7 +140,9 @@ check('unknown id shows not found', (await page.$eval('.empty h1', (e) => e.text
 await page.goto(BASE + '#/analytics', { waitUntil: 'networkidle0' });
 check('analytics: title', (await page.title()) === 'Аналитика ухода · Адаптация новичков', await page.title());
 check('analytics: survival chart has a label with day 90', (await page.$eval('svg[role=img]', (e) => e.getAttribute('aria-label'))).includes('90-й день'));
-check('analytics: two rate tables', (await page.$$('table.rates')).length === 2);
+check('analytics: department, position and backtest tables', (await page.$$('table.rates')).length === 3);
+const bt = await page.$$eval('table[aria-label="Доля отмеченных правилами"] tbody tr', (rs) => rs.map((r) => r.textContent));
+check('analytics: backtest block is labelled circular on the demo', bt.length === 2 && (await hasText('Проверка круговая')), bt.join(' | '));
 check('analytics: no NaN anywhere', !(await hasText('NaN')));
 await shot(page, '06-analytics', { fullPage: true });
 await axeClean('analytics');

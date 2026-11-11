@@ -15,6 +15,7 @@ The company says hiring and dismissal run as Bitrix24 tasks. The risk rules belo
 - **Board.** Active newcomers in their first 90 days, riskiest first. Summary tiles (click to filter by risk level), a chart of when people leave, department filter, search by name or position.
 - **Card.** Risk score with the reasons behind it, the recommended next action, a 0 to 90 day timeline of onboarding tasks and the task table.
 - **Analytics.** `#/analytics`: Kaplan-Meier curve of how many newcomers stay, early-exit rate (left within 90 days) by department and by position. Only hires made at least 90 days before the data date count, groups under 10 hires are labelled "мало данных".
+- **Rules backtest.** On the analytics screen: replays the risk rules as of day 20 of each person and shows how many early leavers vs stayers they would have flagged. On the demo this is circular (the generator links task completion and leaving) and is labelled so; on your data it is a first check of the hypotheses.
 - **Your own data.** `#/import`: load a people table (CSV with `;`, `,` or tab, or JSON) and optionally an onboarding-tasks table; Russian or English headers, `DD.MM.YYYY` dates. Bad rows are skipped and reported with their row number. Files are processed in the browser only. Without a tasks file there is no rule-based risk (it would invent "no mentor meeting" for everyone), so the board shows newcomers ranked by their department's history instead. Templates: `public/samples/`; columns: [docs/data-contract.md](docs/data-contract.md).
 - **Bitrix24 task.** A button builds the `tasks.task.add` call for a check-in with the newcomer. It is only displayed (and can be copied), never sent: there is no Bitrix24 integration.
 
@@ -45,7 +46,7 @@ npm run dev        # development server
 npm test           # unit and UI tests (Vitest, jsdom)
 npm run build      # type-check and build to dist/
 npm run preview    # serve the production build
-npm run check:browser   # 61 end-to-end and axe-core accessibility checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
+npm run check:browser   # 62 end-to-end and axe-core accessibility checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
 ```
 
 Node 20 or newer. Deployment to GitHub Pages is in `.github/workflows/pages.yml` (tests, build, publish on push to `main`); the app uses relative asset paths and hash routing, so it works under a repository sub-path.
@@ -53,7 +54,7 @@ Node 20 or newer. Deployment to GitHub Pages is in `.github/workflows/pages.yml`
 ## Layout
 
 ```
-src/domain/   dates, risk rules, board, stats, attrition analytics, Bitrix24 payload (pure functions)
+src/domain/   dates, risk rules, board, stats, attrition analytics, backtest, Bitrix24 payload (pure functions)
 src/import/   CSV/JSON table parser and row mapping with per-row issues
 src/data/     seeded generator and the demo dataset
 src/ui/       React screens: board, card, timeline, modal, analytics, import

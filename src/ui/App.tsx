@@ -88,7 +88,7 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
       <main className="app">
         {banner}
         <Nav active="analytics" />
-        <AnalyticsScreen employees={employees} asOf={asOf} />
+        <AnalyticsScreen employees={employees} asOf={asOf} synthetic={source === 'demo'} />
       </main>
     );
   }

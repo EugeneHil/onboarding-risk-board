@@ -81,6 +81,33 @@ describe('AnalyticsScreen edge cases', () => {
   });
 });
 
+describe('rules backtest block', () => {
+  it('shows both flagged shares for the demo and says the check is circular on synthetic data', () => {
+    render(<AnalyticsScreen employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} synthetic />);
+    const block = screen.getByRole('region', { name: /Проверка правил/ });
+    expect(within(block).getByText(/Ушедшие до 90-го дня/)).toBeTruthy();
+    expect(within(block).getByText(/Остались/)).toBeTruthy();
+    expect(block.textContent).toMatch(/\d+%/);
+    expect(block.textContent).toMatch(/круговая/);
+    expect(block.textContent).not.toMatch(/NaN/);
+  });
+
+  it('does not call the check circular for imported data', () => {
+    render(<AnalyticsScreen employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
+    const block = screen.getByRole('region', { name: /Проверка правил/ });
+    expect(block.textContent).not.toMatch(/круговая/);
+  });
+
+  it('is hidden when the dataset has no onboarding tasks', () => {
+    const people = [
+      makeEmployee({ hireDate: addDays(ASOF, -200) }),
+      makeEmployee({ hireDate: addDays(ASOF, -150) }),
+    ];
+    render(<AnalyticsScreen employees={people} asOf={ASOF} />);
+    expect(screen.queryByRole('region', { name: /Проверка правил/ })).toBeNull();
+  });
+});
+
 describe('App routing to analytics', () => {
   it('renders the analytics screen and page title for #/analytics', () => {
     window.location.hash = '#/analytics';

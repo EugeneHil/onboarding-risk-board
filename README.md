@@ -6,13 +6,21 @@ A small static web app for HR and line managers of a sports-goods wholesale and 
 
 The report for the test task is in [REPORT.md](REPORT.md) (Russian and English).
 
+## Screenshots (synthetic demo data)
+
+![Board](docs/screenshots/board.png)
+
+| Card | Analytics | Phone |
+| --- | --- | --- |
+| ![Card](docs/screenshots/card.png) | ![Analytics](docs/screenshots/analytics.png) | ![Card on a phone](docs/screenshots/mobile-card.png) |
+
 ## Assumption (please read)
 
 The company says hiring and dismissal run as Bitrix24 tasks. The risk rules below additionally assume that **an onboarding task chain exists** (mentor meeting, manager check-ins, ...). That is **not confirmed**. If it does not exist, only hire and leave dates are certain; see [docs/data-contract.md](docs/data-contract.md) for the minimal data this needs.
 
 ## What it does
 
-- **Board.** Active newcomers in their first 90 days, riskiest first. Summary tiles (click to filter by risk level), a chart of when people leave, department filter, search by name or position.
+- **Board.** Active newcomers in their first 90 days, riskiest first. Summary tiles (click to filter by risk level), a chart of when people leave, department filter, search by name or position. "Скачать список (CSV)" downloads what is currently shown (UTF-8 with BOM, `;`-separated, all reasons per person; text starting with `=`, `+`, `-` or `@` is neutralised against spreadsheet formulas). The board also has a print layout (light palette, no controls).
 - **Card.** Risk score with the reasons behind it, the recommended next action, a 0 to 90 day timeline of onboarding tasks and the task table.
 - **Analytics.** `#/analytics`: Kaplan-Meier curve of how many newcomers stay, early-exit rate (left within 90 days) by department and by position. Only hires made at least 90 days before the data date count, groups under 10 hires are labelled "мало данных".
 - **Rules backtest.** On the analytics screen: replays the risk rules as of day 7, 14, 20 and 30 of each person, at two thresholds (medium or high / high only), and shows how many early leavers vs stayers they would have flagged, with the difference. On the demo this is circular (the generator links task completion and leaving) and is labelled so; on your data it is a first check of the hypotheses.

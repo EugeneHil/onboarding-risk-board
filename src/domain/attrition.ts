@@ -127,3 +127,46 @@ export function buildHistoryBoard(employees: Employee[], asOf: ISODate): History
         a.tenureDay - b.tenureDay,
     );
 }
+
+export interface ReasonRow {
+  reason: string;
+  /** Leavers who gave this reason. */
+  all: number;
+  /** Of them, those who left within 90 days of hire (same definition as the early-exit rates). */
+  early: number;
+}
+
+export interface ReasonBreakdown {
+  /** All leavers, with or without a reason. */
+  leavers: number;
+  /** Leavers with no reason (missing or blank): never guessed, only counted. */
+  unspecified: number;
+  rows: ReasonRow[];
+}
+
+/**
+ * Leavers grouped by the reason written in the data. Reasons are compared ignoring case and
+ * surrounding spaces; the first spelling found is shown. Mapping free text to categories is left
+ * to whoever knows the real data.
+ */
+export function leaveReasonBreakdown(employees: Employee[]): ReasonBreakdown {
+  const groups = new Map<string, ReasonRow>();
+  let leavers = 0;
+  let unspecified = 0;
+  for (const e of employees) {
+    if (e.status !== 'left') continue;
+    leavers += 1;
+    const reason = e.leaveReason?.trim() ?? '';
+    if (reason === '') {
+      unspecified += 1;
+      continue;
+    }
+    const key = reason.toLowerCase();
+    const g = groups.get(key) ?? { reason, all: 0, early: 0 };
+    groups.set(key, g);
+    g.all += 1;
+    if (e.leaveDate && daysBetween(e.hireDate, e.leaveDate) <= RISK_WINDOW_DAYS) g.early += 1;
+  }
+  const rows = [...groups.values()].sort((a, b) => b.all - a.all || a.reason.localeCompare(b.reason, 'ru'));
+  return { leavers, unspecified, rows };
+}

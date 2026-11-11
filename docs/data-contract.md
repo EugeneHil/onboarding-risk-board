@@ -20,7 +20,7 @@ CSV (`;`, `,` or tab separated, UTF-8, BOM tolerated) or JSON (an array of objec
 | Position | `position`, `должность` | no |
 | Department | `department`, `подразделение`, `отдел` | no (shown as "Не указано") |
 | Leave date | `leave_date`, `fired`, `дата увольнения`, `уволен` | for leavers |
-| Leave reason | `leave_reason`, `причина увольнения`, `причина` | no |
+| Leave reason | `leave_reason`, `причина увольнения`, `причина` | no (shown on the analytics screen as a breakdown of leavers) |
 | Id | `id`, `табельный номер`, `employee_id` | no (generated) |
 | Manager / mentor | `manager`, `руководитель` / `mentor`, `наставник` | no |
 

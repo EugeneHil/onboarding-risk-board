@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import { backtest } from '../domain/backtest';
-import { earlyExitRates, survivalCurve, survivalKnownAt, type ExitRate } from '../domain/attrition';
+import {
+  earlyExitRates,
+  leaveReasonBreakdown,
+  MIN_COHORT,
+  survivalCurve,
+  survivalKnownAt,
+  type ExitRate,
+} from '../domain/attrition';
 import type { Employee, ISODate } from '../domain/types';
 import { departmentLabel } from './labels';
 import { SurvivalChart } from './SurvivalChart';
@@ -47,6 +54,54 @@ function RateTable({
         ))}
       </tbody>
     </table>
+  );
+}
+
+function ReasonTable({
+  reasons,
+  synthetic,
+}: {
+  reasons: ReturnType<typeof leaveReasonBreakdown>;
+  synthetic: boolean;
+}) {
+  const given = reasons.leavers - reasons.unspecified;
+  const showShares = given >= MIN_COHORT;
+  return (
+    <>
+      {synthetic && (
+        <p className="footnote">
+          Демо: причины выбраны случайно генератором, это не вывод о том, почему уходят.
+        </p>
+      )}
+      <table className="rates" aria-label="Причины ухода">
+        <thead>
+          <tr>
+            <th scope="col">Причина</th>
+            <th scope="col">Ушли</th>
+            {showShares && <th scope="col">Доля</th>}
+            <th scope="col">Из них до 90-го дня</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reasons.rows.map((r) => (
+            <tr key={r.reason}>
+              <th scope="row">{r.reason}</th>
+              <td>{r.all}</td>
+              {showShares && <td>{pct(r.all / given)}</td>}
+              <td>{r.early}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="footnote">
+        {showShares
+          ? 'Доля считается среди ушедших, указавших причину. '
+          : `Мало данных: меньше ${MIN_COHORT} ушедших с указанной причиной, доли не считаем. `}
+        {reasons.unspecified > 0 && `Без указания причины: ${reasons.unspecified}. `}
+        Причины сравниваются как написано в данных (без учёта регистра); свести их к категориям лучше
+        вместе с HR на ваших данных.
+      </p>
+    </>
   );
 }
 
@@ -98,7 +153,8 @@ export function AnalyticsScreen({
         : undefined,
     [employees, asOf, hasTasks],
   );
-  const leavers = employees.filter((e) => e.status === 'left').length;
+  const reasons = useMemo(() => leaveReasonBreakdown(employees), [employees]);
+  const leavers = reasons.leavers;
   const survival90 = survivalKnownAt(curve, 90);
 
   return (
@@ -157,6 +213,14 @@ export function AnalyticsScreen({
           rates={byPosition}
           label={(k) => k || 'Не указано'}
         />
+      </section>
+      <section aria-label="Причины ухода">
+        <h2>Причины ухода</h2>
+        {reasons.rows.length === 0 ? (
+          <p>В этих данных причины увольнения не указаны (колонка «Причина увольнения»).</p>
+        ) : (
+          <ReasonTable reasons={reasons} synthetic={synthetic} />
+        )}
       </section>
       {tests && (
         <section aria-label="Проверка правил на истории">

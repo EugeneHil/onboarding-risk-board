@@ -175,7 +175,8 @@ check('unknown id shows not found', (await page.$eval('.empty h1', (e) => e.text
 await page.goto(BASE + '#/analytics', { waitUntil: 'networkidle0' });
 check('analytics: title', (await page.title()) === 'Аналитика ухода · Адаптация новичков', await page.title());
 check('analytics: survival chart has a label with day 90', (await page.$eval('svg[role=img]', (e) => e.getAttribute('aria-label'))).includes('90-й день'));
-check('analytics: department, position and backtest tables', (await page.$$('table.rates')).length === 3);
+check('analytics: department, position, leave-reason and backtest tables', (await page.$$('table.rates')).length === 4);
+check('analytics: demo leave reasons are labelled as random', await page.$eval('section[aria-label="Причины ухода"]', (e) => e.textContent.includes('выбраны случайно') && e.querySelectorAll('tbody tr').length >= 3));
 const bt = await page.$$eval('table[aria-label="Доля отмеченных правилами"] tbody tr', (rs) => rs.map((r) => r.textContent));
 check('analytics: backtest has 4 cut days x 2 thresholds and is labelled circular on the demo', bt.length === 8 && (await hasText('Проверка круговая')), bt.join(' | '));
 check('analytics: no NaN anywhere', !(await hasText('NaN')));
@@ -230,6 +231,7 @@ await axeClean('imported board');
 await page.click('.nav a[href="#/analytics"]');
 await page.waitForSelector('table.rates');
 check('analytics follows the imported data', await hasText('Магазин'));
+check('analytics: imported leave reasons shown, small sample says so', await page.$eval('section[aria-label="Причины ухода"]', (e) => e.textContent.includes('по собственному желанию') && e.textContent.includes('Мало данных')));
 await axeClean('analytics (imported)');
 await page.goto(BASE + '#/import', { waitUntil: 'networkidle0' });
 await clickButton('Вернуться к демо');

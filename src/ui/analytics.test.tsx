@@ -203,3 +203,48 @@ describe('imported employee card without optional fields', () => {
     expect(text).not.toMatch(/Руководитель:\s*\./);
   });
 });
+
+describe('leave reasons on the analytics screen', () => {
+  const left = (reason: string | undefined, n: number) =>
+    Array.from({ length: n }, (_, i) =>
+      makeEmployee({
+        id: `${reason ?? 'none'}-${i}`,
+        hireDate: addDays(ASOF, -200),
+        status: 'left',
+        leaveDate: addDays(ASOF, -150),
+        ...(reason ? { leaveReason: reason } : {}),
+      }),
+    );
+
+  it('says when the data has no reasons, without empty tables or NaN', () => {
+    render(<AnalyticsScreen employees={left(undefined, 4)} asOf={ASOF} />);
+    expect(screen.getByText(/причины увольнения не указаны/i)).toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: /причин/i })).toBeNull();
+    expect(document.body.textContent).not.toContain('NaN');
+  });
+
+  it('with few reasons shows counts only and says the sample is too small', () => {
+    render(<AnalyticsScreen employees={[...left('Зарплата', 3), ...left('График', 2)]} asOf={ASOF} />);
+    const table = screen.getByRole('table', { name: /причин/i });
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows[0]).toHaveTextContent('Зарплата');
+    expect(rows[0]).toHaveTextContent('3');
+    expect(table).not.toHaveTextContent('%');
+    expect(screen.getByRole('region', { name: 'Причины ухода' })).toHaveTextContent('Мало данных');
+  });
+
+  it('with enough reasons shows shares of the leavers who gave a reason', () => {
+    render(<AnalyticsScreen employees={[...left('Зарплата', 8), ...left('График', 2), ...left(undefined, 5)]} asOf={ASOF} />);
+    const table = screen.getByRole('table', { name: /причин/i });
+    expect(within(table).getAllByRole('row')[1]).toHaveTextContent('80%');
+    expect(screen.getByText(/без указания причины: 5/i)).toBeInTheDocument();
+  });
+});
+
+describe('leave reasons on the demo', () => {
+  it('says the demo reasons are generated at random, so they are not a finding', () => {
+    render(<AnalyticsScreen employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} synthetic />);
+    const section = screen.getByRole('region', { name: 'Причины ухода' });
+    expect(section).toHaveTextContent('выбраны случайно');
+  });
+});

@@ -1,6 +1,6 @@
 import { makeEmployee } from '../test/factories';
 import { addDays } from './dates';
-import { buildHistoryBoard, earlyExitRates, survivalAt, survivalCurve, survivalKnownAt } from './attrition';
+import { buildHistoryBoard, earlyExitRates, leaveReasonBreakdown, survivalAt, survivalCurve, survivalKnownAt } from './attrition';
 import type { Employee } from './types';
 
 const ASOF = '2026-11-11';
@@ -168,5 +168,44 @@ describe('buildHistoryBoard ordering with small groups', () => {
     const b = active(5, { department: 'tiny', fullName: 'Из малой' });
     const names = buildHistoryBoard([...big, ...tinyRisky, a, b], ASOF).map((r) => r.employee.fullName);
     expect(names).toEqual(['Из большой', 'Из малой']);
+  });
+});
+
+describe('leaveReasonBreakdown', () => {
+  it('counts leavers per reason, ignoring case and spaces, most frequent first', () => {
+    const people = [
+      leaver(30, 200, { leaveReason: 'По собственному желанию' }),
+      leaver(120, 300, { leaveReason: ' по собственному желанию ' }),
+      leaver(45, 200, { leaveReason: 'Не прошёл испытательный срок' }),
+      leaver(10, 100, { leaveReason: 'Не прошёл испытательный срок' }),
+      leaver(60, 100, { leaveReason: 'Не прошёл испытательный срок' }),
+      active(50, { leaveReason: 'должно игнорироваться' }),
+    ];
+    const r = leaveReasonBreakdown(people);
+    expect(r.leavers).toBe(5);
+    expect(r.rows.map((x) => [x.reason, x.all, x.early])).toEqual([
+      ['Не прошёл испытательный срок', 3, 3],
+      ['По собственному желанию', 2, 1],
+    ]);
+  });
+
+  it('counts early leavers by tenure <= 90 days, like the early-exit rates', () => {
+    const people = [
+      leaver(90, 200, { leaveReason: 'a' }),
+      leaver(91, 200, { leaveReason: 'a' }),
+    ];
+    expect(leaveReasonBreakdown(people).rows[0]).toMatchObject({ all: 2, early: 1 });
+  });
+
+  it('reports leavers without a reason separately and never invents one', () => {
+    const people = [
+      leaver(30, 100, { leaveReason: 'x' }),
+      leaver(30, 100, { leaveReason: '   ' }),
+      leaver(30, 100),
+    ];
+    const r = leaveReasonBreakdown(people);
+    expect(r.leavers).toBe(3);
+    expect(r.unspecified).toBe(2);
+    expect(r.rows).toHaveLength(1);
   });
 });

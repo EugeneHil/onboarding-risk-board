@@ -19,6 +19,20 @@ export const ACTIONS: Record<RuleCode, string> = {
   stalled: 'Позвонить новичку: по задачам адаптации давно нет движения',
 };
 
+/** The rule behind a reason in plain words, built from the same numbers the scoring uses. */
+export function explainRule(code: RuleCode, rules = RULES): string {
+  switch (code) {
+    case 'overdue_tasks':
+      return `Открытая задача адаптации, у которой срок уже прошёл: ${rules.overdue.perTask} баллов за каждую, не больше ${rules.overdue.cap}.`;
+    case 'no_mentor_meeting':
+      return `После ${rules.noMentorMeeting.afterDay}-го дня работы встреча с наставником не отмечена выполненной: ${rules.noMentorMeeting.points} баллов.`;
+    case 'no_two_week_checkin':
+      return `После ${rules.noTwoWeekCheckin.afterDay}-го дня не выполнен разговор руководителя со сроком до 14-го дня: ${rules.noTwoWeekCheckin.points} баллов.`;
+    case 'stalled':
+      return `Есть просроченные задачи, а за последние ${rules.stalled.idleDays} дн. не выполнено ни одной: ${rules.stalled.points} баллов.`;
+  }
+}
+
 const NO_ACTION = 'Действий не требуется: адаптация идёт по плану';
 
 export function levelFor(score: number): RiskLevel {

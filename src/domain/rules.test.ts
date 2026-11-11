@@ -1,5 +1,5 @@
 import { addDays } from './dates';
-import { ACTIONS, evaluateRisk, levelFor, RULES } from './rules';
+import { ACTIONS, evaluateRisk, explainRule, levelFor, RULES } from './rules';
 import { makeEmployee, makeTask } from '../test/factories';
 
 const ASOF = '2026-11-11';
@@ -115,5 +115,31 @@ describe('levelFor', () => {
     expect(levelFor(49)).toBe('medium');
     expect(levelFor(25)).toBe('medium');
     expect(levelFor(24)).toBe('low');
+  });
+});
+
+describe('explainRule', () => {
+  it('states each rule with the numbers from RULES, not copies of them', () => {
+    const custom = {
+      ...RULES,
+      overdue: { perTask: 7, cap: 21 },
+      noMentorMeeting: { afterDay: 9, points: 33 },
+      noTwoWeekCheckin: { afterDay: 18, points: 11 },
+      stalled: { idleDays: 12, points: 5 },
+    };
+    expect(explainRule('overdue_tasks', custom)).toContain('7');
+    expect(explainRule('overdue_tasks', custom)).toContain('21');
+    expect(explainRule('no_mentor_meeting', custom)).toContain('9-го');
+    expect(explainRule('no_mentor_meeting', custom)).toContain('33');
+    expect(explainRule('no_two_week_checkin', custom)).toContain('18-го');
+    expect(explainRule('no_two_week_checkin', custom)).toContain('11');
+    expect(explainRule('stalled', custom)).toContain('12');
+    expect(explainRule('stalled', custom)).toContain('5');
+  });
+
+  it('explains every rule code with the default numbers', () => {
+    for (const code of Object.keys(ACTIONS) as Array<keyof typeof ACTIONS>) {
+      expect(explainRule(code).length).toBeGreaterThan(20);
+    }
   });
 });

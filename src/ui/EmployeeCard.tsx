@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildBitrixTask } from '../domain/bitrix';
 import { formatRu } from '../domain/dates';
-import { evaluateRisk } from '../domain/rules';
+import { evaluateRisk, explainRule, RULES } from '../domain/rules';
 import type { Employee, ISODate } from '../domain/types';
 import { BitrixModal } from './BitrixModal';
 import { departmentLabel, LEVEL_LABEL, TASK_KIND_LABEL } from './labels';
@@ -59,10 +59,18 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
               {risk.reasons.map((r) => (
                 <li key={r.code}>
                   {r.text} <span className="muted">(+{r.points})</span>
+                  <details className="why">
+                    <summary>Почему +{r.points}?</summary>
+                    <p>{explainRule(r.code)}</p>
+                  </details>
                 </li>
               ))}
             </ul>
           )}
+          <p className="muted why-levels">
+            Уровень: высокий — от {RULES.thresholds.high} баллов, средний — от {RULES.thresholds.medium}. Это
+            гипотезы, а не выводы по реальным данным.
+          </p>
         </section>
         <section aria-label="Что сделать" className="panel">
           <h2>Что сделать</h2>

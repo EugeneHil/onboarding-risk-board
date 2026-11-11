@@ -148,6 +148,9 @@ check('card lists reasons', (await page.$$eval('section[aria-label="Причин
 check('timeline rendered', (await page.$$eval('.timeline .marker', (m) => m.length)) >= 6);
 await shot(page, '02-card', { fullPage: true });
 await axeClean('card');
+await page.click('section[aria-label="Причины риска"] details.why summary');
+check('card: a reason opens its rule', await page.$eval('section[aria-label="Причины риска"] details.why', (d) => d.open && d.textContent.includes('баллов')));
+await axeClean('card (reason explained)');
 
 await clickButton('Создать задачу в Битрикс24');
 await page.waitForSelector('[role=dialog]');

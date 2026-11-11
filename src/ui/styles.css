@@ -187,3 +187,9 @@ a { color: var(--accent); }
   .badge { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   a { color: inherit; text-decoration: none; }
 }
+
+.why { margin-top: 2px; font-size: 13px; }
+.why summary { cursor: pointer; color: var(--accent); width: fit-content; }
+.why p { margin: 4px 0 0; color: var(--muted); }
+.why-levels { font-size: 13px; margin: 10px 0 0; }
+@media print { .why summary { display: none; } .why p { display: none; } }

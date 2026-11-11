@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DEMO_AS_OF, DEMO_EMPLOYEES } from '../data/demo';
+import { RULES } from '../domain/rules';
 import { makeTask } from '../test/factories';
 import { App } from './App';
 import { taskState, Timeline } from './Timeline';
@@ -77,5 +78,22 @@ describe('Timeline', () => {
     expect(screen.getByText(/Первая.*Выполнено/)).toBeInTheDocument();
     expect(screen.getByText(/Вторая.*Просрочено/)).toBeInTheDocument();
     expect(screen.getByText(/Третья.*Впереди/)).toBeInTheDocument();
+  });
+});
+
+describe('why a reason scores points', () => {
+  it('opens the rule behind a reason on the card, with the numbers from RULES', async () => {
+    render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
+    const firstRow = within(screen.getByRole('table')).getAllByRole('row')[1] as HTMLElement;
+    await userEvent.click(within(firstRow).getByRole('button'));
+
+    const reasons = screen.getByRole('region', { name: 'Причины риска' });
+    const first = within(reasons).getAllByRole('listitem')[0] as HTMLElement;
+    const why = within(first).getByText(/Почему \+\d+\?/);
+    expect(first.querySelector('details')?.open).toBe(false);
+    await userEvent.click(why);
+    expect(first.querySelector('details')?.open).toBe(true);
+    expect(first).toHaveTextContent('баллов');
+    expect(reasons).toHaveTextContent(`от ${RULES.thresholds.high}`);
   });
 });

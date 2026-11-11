@@ -1,7 +1,8 @@
 /** Calendar date as 'YYYY-MM-DD', always handled in UTC. */
 export type ISODate = string;
 
-export type Department = 'warehouse' | 'store' | 'sales' | 'office';
+/** Free text from the source data. The demo uses warehouse | store | sales | office. */
+export type Department = string;
 
 export type TaskKind =
   | 'docs'

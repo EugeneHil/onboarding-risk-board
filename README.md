@@ -6,6 +6,10 @@ A small static web app for HR and line managers of a sports-goods wholesale and 
 
 The report for the test task is in [REPORT.md](REPORT.md) (Russian and English).
 
+## Assumption (please read)
+
+The company says hiring and dismissal run as Bitrix24 tasks. The risk rules below additionally assume that **an onboarding task chain exists** (mentor meeting, manager check-ins, ...). That is **not confirmed**. If it does not exist, only hire and leave dates are certain; see [docs/data-contract.md](docs/data-contract.md) for the minimal data this needs.
+
 ## What it does
 
 - **Board.** Active newcomers in their first 90 days, riskiest first. Summary tiles (click to filter by risk level), a chart of when people leave, department filter, search by name or position.

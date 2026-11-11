@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildBoard } from '../domain/board';
 import { formatRu } from '../domain/dates';
 import { leaversByTenure } from '../domain/stats';
-import type { Department, Employee, ISODate, RiskLevel } from '../domain/types';
+import type { Employee, ISODate, RiskLevel } from '../domain/types';
 import { BoardTable } from './BoardTable';
 import { EmployeeCard } from './EmployeeCard';
-import { DEPARTMENT_LABEL } from './labels';
+import { departmentLabel, departmentsOf } from './labels';
 import { Summary } from './Summary';
 import { useHashRoute } from './useHashRoute';
 
@@ -20,11 +20,12 @@ const norm = (s: string) => s.toLocaleLowerCase('ru').replace(/ё/g, 'е');
 
 export function App({ employees, asOf }: AppProps) {
   const { route, navigate } = useHashRoute();
-  const [department, setDepartment] = useState<Department | ''>('');
+  const [department, setDepartment] = useState('');
   const [level, setLevel] = useState<RiskLevel | null>(null);
   const [query, setQuery] = useState('');
 
   const board = useMemo(() => buildBoard(employees, asOf), [employees, asOf]);
+  const departments = useMemo(() => departmentsOf(employees), [employees]);
   const leavers = useMemo(
     () =>
       leaversByTenure(
@@ -90,12 +91,12 @@ export function App({ employees, asOf }: AppProps) {
           Подразделение
           <select
             value={department}
-            onChange={(e) => setDepartment(e.target.value as Department | '')}
+            onChange={(e) => setDepartment(e.target.value)}
           >
             <option value="">Все</option>
-            {(Object.keys(DEPARTMENT_LABEL) as Department[]).map((d) => (
+            {departments.map((d) => (
               <option key={d} value={d}>
-                {DEPARTMENT_LABEL[d]}
+                {departmentLabel(d)}
               </option>
             ))}
           </select>
@@ -111,6 +112,11 @@ export function App({ employees, asOf }: AppProps) {
         </label>
       </div>
       <BoardTable rows={visible} onOpen={(id) => navigate(`#/employee/${encodeURIComponent(id)}`)} />
+      <p className="footnote">
+        Допущение: в Битрикс24 есть цепочка задач адаптации (встреча с наставником, разговор
+        руководителя и т. д.). В задании сказано только про задачи приёма и увольнения, поэтому
+        это нужно проверить на ваших данных.
+      </p>
     </div>
   );
 }

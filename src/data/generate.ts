@@ -1,5 +1,7 @@
 import { addDays, daysBetween } from '../domain/dates';
-import type { Department, Employee, ISODate, OnboardingTask, TaskKind } from '../domain/types';
+import type { Employee, ISODate, OnboardingTask, TaskKind } from '../domain/types';
+
+type DemoDepartment = 'warehouse' | 'store' | 'sales' | 'office';
 import { createRng } from './rng';
 
 type Rng = () => number;
@@ -15,14 +17,14 @@ const SURNAMES: Array<[string, string]> = [
   ['Павлов', 'Павлова'], ['Козлов', 'Козлова'], ['Степанов', 'Степанова'], ['Николаев', 'Николаева'],
 ];
 
-const POSITIONS: Record<Department, string[]> = {
+const POSITIONS: Record<DemoDepartment, string[]> = {
   warehouse: ['Кладовщик', 'Комплектовщик заказов', 'Грузчик-экспедитор'],
   store: ['Продавец-консультант', 'Кассир', 'Старший продавец'],
   sales: ['Менеджер по оптовым продажам', 'Менеджер по работе с клиентами'],
   office: ['Бухгалтер', 'Специалист по закупкам', 'Администратор'],
 };
 
-const LOCATIONS: Record<Department, string[]> = {
+const LOCATIONS: Record<DemoDepartment, string[]> = {
   warehouse: ['Склад «Северный»', 'Склад «Южный»'],
   store: ['Магазин «Центр»', 'Магазин «Арена»', 'Магазин «Парк»', 'Магазин «Река»'],
   sales: ['Отдел продаж'],
@@ -42,7 +44,7 @@ interface TemplateTask {
   title: string;
   dueDay: number;
   responsible: OnboardingTask['responsible'];
-  departments?: Department[];
+  departments?: DemoDepartment[];
 }
 
 const TEMPLATE: TemplateTask[] = [
@@ -76,7 +78,7 @@ function uniquePersonName(rnd: Rng, used: Set<string>): string {
   throw new Error('Name pool exhausted: too many employees requested');
 }
 
-function pickDepartment(rnd: Rng): Department {
+function pickDepartment(rnd: Rng): DemoDepartment {
   const r = rnd();
   if (r < 0.3) return 'warehouse';
   if (r < 0.65) return 'store';
@@ -97,7 +99,7 @@ function planLeaveTenure(rnd: Rng, engagement: number): number | undefined {
 function buildTasks(
   rnd: Rng,
   id: string,
-  department: Department,
+  department: DemoDepartment,
   hireDate: ISODate,
   endDay: number,
   lastDate: ISODate,

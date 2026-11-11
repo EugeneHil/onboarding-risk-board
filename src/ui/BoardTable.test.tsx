@@ -33,6 +33,11 @@ describe('board screen', () => {
     expect(bodyRows()[0]).toHaveTextContent('Высокий');
   });
 
+  it('states the data assumption under the board', () => {
+    render(<App employees={FIXTURE} asOf={ASOF} />);
+    expect(screen.getByText(/Допущение/)).toBeInTheDocument();
+  });
+
   it('always shows the demo-data banner', () => {
     render(<App employees={FIXTURE} asOf={ASOF} />);
     expect(screen.getByText(/Демо-данные/)).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import type { BoardRow } from '../domain/types';
-import { DEPARTMENT_LABEL, LEVEL_LABEL } from './labels';
+import { departmentLabel, LEVEL_LABEL } from './labels';
 
 interface BoardTableProps {
   rows: BoardRow[];
@@ -33,7 +33,7 @@ export function BoardTable({ rows, onOpen }: BoardTableProps) {
                 <div className="muted">{employee.position}</div>
               </td>
               <td>
-                {DEPARTMENT_LABEL[employee.department]}
+                {departmentLabel(employee.department)}
                 <div className="muted">{employee.location}</div>
               </td>
               <td>{risk.tenureDay} из 90</td>

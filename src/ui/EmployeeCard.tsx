@@ -4,7 +4,7 @@ import { formatRu } from '../domain/dates';
 import { evaluateRisk } from '../domain/rules';
 import type { Employee, ISODate } from '../domain/types';
 import { BitrixModal } from './BitrixModal';
-import { DEPARTMENT_LABEL, LEVEL_LABEL, TASK_KIND_LABEL } from './labels';
+import { departmentLabel, LEVEL_LABEL, TASK_KIND_LABEL } from './labels';
 import { STATE_LABEL, taskState, Timeline } from './Timeline';
 
 interface EmployeeCardProps {
@@ -41,7 +41,7 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
         </span>
       </header>
       <p className="muted">
-        {employee.position}, {DEPARTMENT_LABEL[employee.department]}, {employee.location}. Принят{' '}
+        {employee.position}, {departmentLabel(employee.department)}, {employee.location}. Принят{' '}
         {formatRu(employee.hireDate)}, день {risk.tenureDay} из 90. Руководитель:{' '}
         {employee.managerName}. Наставник: {employee.mentorName ?? 'не назначен'}.
       </p>

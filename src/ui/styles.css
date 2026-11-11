@@ -150,3 +150,21 @@ table.board { width: 100%; border-collapse: collapse; min-width: 820px; }
 .board td:nth-child(3) { white-space: nowrap; }
 
 .footnote { margin: 12px 0 0; font-size: 13px; color: var(--muted); max-width: 80ch; }
+
+/* navigation and analytics */
+.nav { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0 16px; }
+.nav a { padding: 6px 12px; border-radius: 8px; text-decoration: none; color: inherit; border: 1px solid var(--border, #d0d5dd); }
+.nav a[aria-current='page'] { background: var(--accent, #1d4ed8); color: #fff; border-color: transparent; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.fact { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--border, #d0d5dd); border-radius: 10px; }
+.fact strong { font-size: 28px; }
+.fact span { font-size: 13px; color: var(--muted); }
+.survival { width: 100%; max-width: 640px; height: auto; }
+.survival .grid { stroke: var(--border, #d0d5dd); stroke-width: 1; }
+.survival .tick { font-size: 11px; fill: var(--muted); }
+.survival .mark { stroke: var(--muted); stroke-dasharray: 4 3; }
+.survival .curve { stroke: var(--accent, #1d4ed8); stroke-width: 2.5; }
+.rates { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+.rates th, .rates td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border, #d0d5dd); }
+.rates .few { color: var(--muted); font-style: italic; }
+.chart-block, .app section h2 { margin-top: 20px; }

@@ -6,6 +6,8 @@ import type { Employee, ISODate, RiskLevel } from '../domain/types';
 import { BoardTable } from './BoardTable';
 import { EmployeeCard } from './EmployeeCard';
 import { departmentLabel, departmentsOf } from './labels';
+import { AnalyticsScreen } from './AnalyticsScreen';
+import { Nav } from './Nav';
 import { Summary } from './Summary';
 import { useHashRoute } from './useHashRoute';
 
@@ -15,6 +17,7 @@ export interface AppProps {
 }
 
 const BOARD_TITLE = 'Адаптация новичков: доска риска';
+const SUFFIX = 'Адаптация новичков';
 
 const norm = (s: string) => s.toLocaleLowerCase('ru').replace(/ё/g, 'е');
 
@@ -37,8 +40,10 @@ export function App({ employees, asOf }: AppProps) {
   const openName = openRow?.employee.fullName;
 
   useEffect(() => {
-    document.title = openName ? `${openName} · Адаптация новичков` : BOARD_TITLE;
-  }, [openName]);
+    if (route.name === 'analytics') document.title = `Аналитика ухода · ${SUFFIX}`;
+    else if (route.name === 'import') document.title = `Свои данные · ${SUFFIX}`;
+    else document.title = openName ? `${openName} · ${SUFFIX}` : BOARD_TITLE;
+  }, [route.name, openName]);
 
   const scoped = board.filter(
     ({ employee }) =>
@@ -53,6 +58,26 @@ export function App({ employees, asOf }: AppProps) {
       Демо-данные: все люди выдуманные. Данные на {formatRu(asOf)}.
     </div>
   );
+
+  if (route.name === 'analytics') {
+    return (
+      <div className="app">
+        {banner}
+        <Nav active="analytics" />
+        <AnalyticsScreen employees={employees} asOf={asOf} />
+      </div>
+    );
+  }
+
+  if (route.name === 'import') {
+    return (
+      <div className="app">
+        {banner}
+        <Nav active="import" />
+        <h1>Свои данные</h1>
+      </div>
+    );
+  }
 
   if (route.name === 'employee') {
     const row = openRow;
@@ -78,6 +103,7 @@ export function App({ employees, asOf }: AppProps) {
   return (
     <div className="app">
       {banner}
+      <Nav active="board" />
       <header>
         <h1>Новички: кто в зоне риска</h1>
         <p className="lead">

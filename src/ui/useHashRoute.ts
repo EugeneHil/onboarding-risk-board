@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type Route = { name: 'board' } | { name: 'employee'; id: string };
+export type Route =
+  | { name: 'board' }
+  | { name: 'analytics' }
+  | { name: 'import' }
+  | { name: 'employee'; id: string };
 
 export function parseHash(hash: string): Route {
   const match = /^#\/employee\/(.+)$/.exec(hash);
@@ -11,6 +15,8 @@ export function parseHash(hash: string): Route {
       return { name: 'employee', id: match[1] as string };
     }
   }
+  if (hash === '#/analytics') return { name: 'analytics' };
+  if (hash === '#/import') return { name: 'import' };
   return { name: 'board' };
 }
 

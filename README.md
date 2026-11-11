@@ -10,9 +10,11 @@ The report for the test task is in [REPORT.md](REPORT.md) (Russian and English).
 
 ![Board](docs/screenshots/board.png)
 
-| Card | Analytics | Phone |
-| --- | --- | --- |
-| ![Card](docs/screenshots/card.png) | ![Analytics](docs/screenshots/analytics.png) | ![Card on a phone](docs/screenshots/mobile-card.png) |
+| Card (reasons explained) | Analytics (incl. leave reasons) |
+| --- | --- |
+| ![Card](docs/screenshots/card.png) | ![Analytics](docs/screenshots/analytics.png) |
+| **Your own data (import)** | **Card on a phone** |
+| ![Import](docs/screenshots/import.png) | ![Card on a phone](docs/screenshots/mobile-card.png) |
 
 ## Assumption (please read)
 

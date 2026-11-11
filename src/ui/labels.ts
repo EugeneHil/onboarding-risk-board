@@ -33,4 +33,5 @@ export const TASK_KIND_LABEL: Record<TaskKind, string> = {
   training: 'Обучение',
   checkin: 'Разговор с руководителем',
   feedback: 'Обратная связь HR',
+  other: 'Другое',
 };

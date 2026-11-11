@@ -10,7 +10,8 @@ export type TaskKind =
   | 'mentor_meeting'
   | 'training'
   | 'checkin'
-  | 'feedback';
+  | 'feedback'
+  | 'other';
 
 export interface OnboardingTask {
   id: string;

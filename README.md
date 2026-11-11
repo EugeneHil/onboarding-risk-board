@@ -39,7 +39,7 @@ npm run dev        # development server
 npm test           # unit and UI tests (Vitest, jsdom)
 npm run build      # type-check and build to dist/
 npm run preview    # serve the production build
-npm run check:browser   # 26 end-to-end checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
+npm run check:browser   # 28 end-to-end checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
 ```
 
 Node 20 or newer. Deployment to GitHub Pages is in `.github/workflows/pages.yml` (tests, build, publish on push to `main`); the app uses relative asset paths and hash routing, so it works under a repository sub-path.
@@ -58,5 +58,4 @@ docs/superpowers/plans/   the implementation plan this was built from
 - No real Bitrix24 integration (needs a webhook or an app and access to the real task data).
 - Rule weights and thresholds are untested against real attrition; they need to be checked against the company's own history of leavers.
 - No authentication or roles, no notifications.
-- The Bitrix24 dialog has no focus trap and does not return focus to its button on close.
 - Not tested in Safari or Firefox or with screen readers (risk is shown by text and shape as well as colour, but this was not verified with assistive technology).

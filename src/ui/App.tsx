@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { buildBoard } from '../domain/board';
 import { formatRu } from '../domain/dates';
 import { leaversByTenure } from '../domain/stats';
@@ -14,6 +14,8 @@ export interface AppProps {
   asOf: ISODate;
 }
 
+const BOARD_TITLE = 'Адаптация новичков: доска риска';
+
 const norm = (s: string) => s.toLocaleLowerCase('ru').replace(/ё/g, 'е');
 
 export function App({ employees, asOf }: AppProps) {
@@ -23,7 +25,19 @@ export function App({ employees, asOf }: AppProps) {
   const [query, setQuery] = useState('');
 
   const board = useMemo(() => buildBoard(employees, asOf), [employees, asOf]);
-  const leavers = useMemo(() => leaversByTenure(employees), [employees]);
+  const leavers = useMemo(
+    () =>
+      leaversByTenure(
+        department === '' ? employees : employees.filter((e) => e.department === department),
+      ),
+    [employees, department],
+  );
+  const openRow = route.name === 'employee' ? board.find((r) => r.employee.id === route.id) : undefined;
+  const openName = openRow?.employee.fullName;
+
+  useEffect(() => {
+    document.title = openName ? `${openName} · Адаптация новичков` : BOARD_TITLE;
+  }, [openName]);
 
   const scoped = board.filter(
     ({ employee }) =>
@@ -40,7 +54,7 @@ export function App({ employees, asOf }: AppProps) {
   );
 
   if (route.name === 'employee') {
-    const row = board.find((r) => r.employee.id === route.id);
+    const row = openRow;
     return (
       <div className="app">
         {banner}

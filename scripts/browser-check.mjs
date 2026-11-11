@@ -96,6 +96,7 @@ await page.goto(BASE, { waitUntil: 'networkidle0' });
 const name = await page.$eval('table.board tbody tr:first-child button.link', (b) => b.textContent);
 await page.click('table.board tbody tr:first-child');
 await page.waitForSelector('article.card');
+check('page title names the open card', (await page.title()) === `${name} · Адаптация новичков`, await page.title());
 check('card lists reasons', (await page.$$eval('section[aria-label="Причины риска"] li', (l) => l.length)) >= 1);
 check('timeline rendered', (await page.$$eval('.timeline .marker', (m) => m.length)) >= 6);
 await shot(page, '02-card', { fullPage: true });
@@ -107,6 +108,7 @@ check('modal shows the tasks.task.add payload', dlg.includes('tasks.task.add') &
 await shot(page, '03-modal');
 await page.keyboard.press('Escape');
 check('Escape closes the modal', (await page.$('[role=dialog]')) === null);
+check('focus returns to the create-task button', await page.evaluate(() => document.activeElement?.textContent === 'Создать задачу в Битрикс24'));
 
 await clickButton('К списку', false);
 await page.waitForSelector('table.board');

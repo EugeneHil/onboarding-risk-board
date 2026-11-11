@@ -16,6 +16,7 @@ interface EmployeeCardProps {
 export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
   const [showModal, setShowModal] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Opening a card from the middle of a long list must start at the top, with focus on the name.
   useEffect(() => {
@@ -63,7 +64,12 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
         <section aria-label="Что сделать" className="panel">
           <h3>Что сделать</h3>
           <p>{risk.nextAction}</p>
-          <button type="button" className="primary" onClick={() => setShowModal(true)}>
+          <button
+            type="button"
+            className="primary"
+            ref={triggerRef}
+            onClick={() => setShowModal(true)}
+          >
             Создать задачу в Битрикс24
           </button>
         </section>
@@ -108,7 +114,15 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
         </div>
       </section>
 
-      {showModal ? <BitrixModal payload={payload} onClose={() => setShowModal(false)} /> : null}
+      {showModal ? (
+        <BitrixModal
+          payload={payload}
+          onClose={() => {
+            setShowModal(false);
+            triggerRef.current?.focus();
+          }}
+        />
+      ) : null}
     </article>
   );
 }

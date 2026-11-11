@@ -80,6 +80,23 @@ const csvText = await page.evaluate(async () => {
 // Blob.text() strips the UTF-8 BOM while decoding, so the BOM is checked on the raw bytes above.
 const csvLines = csvText.text.split('\r\n');
 check('csv export: BOM, header and one line per visible row', csvText.bom && csvText.text.startsWith('Сотрудник;') && csvLines.length === all.length + 1, `lines=${csvLines.length}`);
+// Print layout: controls disappear, the table is not clipped, the page is light even in a dark scheme.
+const viewport = page.viewport();
+await page.setViewport({ width: 720, height: 1000 }); // about the width of an A4 page
+await page.emulateMediaType('print');
+const printed = await page.evaluate(() => {
+  const hidden = (sel) => [...document.querySelectorAll(sel)].every((e) => getComputedStyle(e).display === 'none');
+  const wrap = document.querySelector('.table-wrap');
+  return {
+    chrome: hidden('nav.nav') && hidden('.filters'),
+    clipped: wrap.scrollWidth > wrap.clientWidth,
+    pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  };
+});
+await page.emulateMediaType('screen');
+await page.setViewport(viewport);
+check('print: nav and filters are hidden', printed.chrome);
+check('print: the board table is not clipped', !printed.clipped && !printed.pageOverflow, JSON.stringify(printed));
 check('first row is high risk', all[0].includes('Высокий'));
 await shot(page, '01-board');
 await axeClean('board');

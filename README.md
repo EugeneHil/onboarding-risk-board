@@ -1,5 +1,7 @@
 # Onboarding Risk Board
 
+**Live demo:** https://eugenehil.github.io/onboarding-risk-board/ (synthetic data) · **Code:** https://github.com/EugeneHil/onboarding-risk-board
+
 A small static web app for HR and line managers of a sports-goods wholesale and retail company (~400 people, 100+ hires a year, onboarding and offboarding run as Bitrix24 tasks). About one in three leavers quits before the third month, so the app focuses on the first 90 days: **who among the newcomers needs a call today, and why**.
 
 The report for the test task is in [REPORT.md](REPORT.md) (Russian and English).

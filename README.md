@@ -54,7 +54,7 @@ npm run dev        # development server
 npm test           # unit and UI tests (Vitest, jsdom)
 npm run build      # type-check and build to dist/
 npm run preview    # serve the production build
-npm run check:browser   # 62 end-to-end and axe-core accessibility checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
+npm run check:browser   # 65 end-to-end and axe-core accessibility checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
 ```
 
 Node 20 or newer. Deployment to GitHub Pages is in `.github/workflows/pages.yml` (tests, build, publish on push to `main`); the app uses relative asset paths and hash routing, so it works under a repository sub-path.

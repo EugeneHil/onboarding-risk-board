@@ -14,6 +14,8 @@ The company says hiring and dismissal run as Bitrix24 tasks. The risk rules belo
 
 - **Board.** Active newcomers in their first 90 days, riskiest first. Summary tiles (click to filter by risk level), a chart of when people leave, department filter, search by name or position.
 - **Card.** Risk score with the reasons behind it, the recommended next action, a 0 to 90 day timeline of onboarding tasks and the task table.
+- **Analytics.** `#/analytics`: Kaplan-Meier curve of how many newcomers stay, early-exit rate (left within 90 days) by department and by position. Only hires made at least 90 days before the data date count, groups under 10 hires are labelled "мало данных".
+- **Your own data.** `#/import`: load a people table (CSV with `;`, `,` or tab, or JSON) and optionally an onboarding-tasks table; Russian or English headers, `DD.MM.YYYY` dates. Bad rows are skipped and reported with their row number. Files are processed in the browser only. Without a tasks file there is no rule-based risk (it would invent "no mentor meeting" for everyone), so the board shows newcomers ranked by their department's history instead. Templates: `public/samples/`; columns: [docs/data-contract.md](docs/data-contract.md).
 - **Bitrix24 task.** A button builds the `tasks.task.add` call for a check-in with the newcomer. It is only displayed (and can be copied), never sent: there is no Bitrix24 integration.
 
 ## Risk rules
@@ -43,7 +45,7 @@ npm run dev        # development server
 npm test           # unit and UI tests (Vitest, jsdom)
 npm run build      # type-check and build to dist/
 npm run preview    # serve the production build
-npm run check:browser   # 28 end-to-end checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
+npm run check:browser   # 61 end-to-end and axe-core accessibility checks in a real Chrome against the preview (needs Chrome; CHROME_PATH, BASE_URL optional)
 ```
 
 Node 20 or newer. Deployment to GitHub Pages is in `.github/workflows/pages.yml` (tests, build, publish on push to `main`); the app uses relative asset paths and hash routing, so it works under a repository sub-path.
@@ -51,9 +53,10 @@ Node 20 or newer. Deployment to GitHub Pages is in `.github/workflows/pages.yml`
 ## Layout
 
 ```
-src/domain/   dates, risk rules, board, stats, Bitrix24 payload (pure functions)
+src/domain/   dates, risk rules, board, stats, attrition analytics, Bitrix24 payload (pure functions)
+src/import/   CSV/JSON table parser and row mapping with per-row issues
 src/data/     seeded generator and the demo dataset
-src/ui/       React screens: board, card, timeline, modal
+src/ui/       React screens: board, card, timeline, modal, analytics, import
 docs/superpowers/plans/   the implementation plan this was built from
 ```
 
@@ -62,4 +65,5 @@ docs/superpowers/plans/   the implementation plan this was built from
 - No real Bitrix24 integration (needs a webhook or an app and access to the real task data).
 - Rule weights and thresholds are untested against real attrition; they need to be checked against the company's own history of leavers.
 - No authentication or roles, no notifications.
-- Not tested in Safari or Firefox or with screen readers (risk is shown by text and shape as well as colour, but this was not verified with assistive technology).
+- Accessibility is checked automatically with axe-core (0 violations on every screen, light and dark scheme, desktop and phone width), which finds only part of the problems. Not tested in Safari or Firefox or with real screen readers.
+- The analytics on the demo is synthetic and says nothing about the company; it needs the company's own export. The import was only tried on generated files, not on a real Bitrix24 export.

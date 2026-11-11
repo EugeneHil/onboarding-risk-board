@@ -33,9 +33,9 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
         ← К списку
       </button>
       <header className="card-head">
-        <h2 ref={headingRef} tabIndex={-1}>
+        <h1 ref={headingRef} tabIndex={-1}>
           {employee.fullName}
-        </h2>
+        </h1>
         <span className={`badge badge-${risk.level}`}>
           {LEVEL_LABEL[risk.level]} · {risk.score}
         </span>
@@ -48,7 +48,7 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
 
       <div className="card-grid">
         <section aria-label="Причины риска" className="panel">
-          <h3>Причины риска</h3>
+          <h2>Причины риска</h2>
           {risk.reasons.length === 0 ? (
             <p className="muted">Причин для беспокойства нет.</p>
           ) : (
@@ -62,7 +62,7 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
           )}
         </section>
         <section aria-label="Что сделать" className="panel">
-          <h3>Что сделать</h3>
+          <h2>Что сделать</h2>
           <p>{risk.nextAction}</p>
           <button
             type="button"
@@ -76,13 +76,13 @@ export function EmployeeCard({ employee, asOf, onBack }: EmployeeCardProps) {
       </div>
 
       <section aria-label="Первые 90 дней" className="panel">
-        <h3>Первые 90 дней</h3>
+        <h2>Первые 90 дней</h2>
         <Timeline tasks={tasks} tenureDay={risk.tenureDay} />
       </section>
 
       <section aria-label="Задачи адаптации" className="panel">
-        <h3>Задачи адаптации</h3>
-        <div className="table-wrap">
+        <h2>Задачи адаптации</h2>
+        <div className="table-wrap" role="region" aria-label="Список задач адаптации" tabIndex={0}>
           <table className="board">
             <thead>
               <tr>

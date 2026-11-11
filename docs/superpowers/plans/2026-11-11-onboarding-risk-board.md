@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Project root is `/Users/eugene/Mine/git/tgt/onboarding-risk-board`. Node >= 20. Runtime deps: `react`, `react-dom` only. No chart library, no CSS framework.
+- Project root is the repository root. Node >= 20. Runtime deps: `react`, `react-dom` only. No chart library, no CSS framework.
 - Everything in the repo is English (code, comments, docs, commit messages), with one explicit exception approved by the user: the final report `REPORT.md` is bilingual (Russian first, English second), because the task statement addresses it to the company in Russian. User-facing UI text and the generated demo data (names, positions, task titles, reason texts, Bitrix payload text) are Russian.
 - Dates are `YYYY-MM-DD` strings handled in UTC; no `new Date()` for "today". The as-of date is always a parameter; the demo uses `DEMO_AS_OF = '2026-11-11'`.
 - Risk window is 0..90 tenure days inclusive (`RISK_WINDOW_DAYS = 90`). Thresholds: high >= 50, medium >= 25, else low. All rule numbers live in one `RULES` object in `src/domain/rules.ts`.

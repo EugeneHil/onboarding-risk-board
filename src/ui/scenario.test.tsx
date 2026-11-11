@@ -17,7 +17,7 @@ describe('main scenario: board -> card -> Bitrix24 task -> back', () => {
 
     await userEvent.click(within(firstRow).getByRole('button'));
 
-    expect(await screen.findByRole('heading', { level: 2, name })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name })).toBeInTheDocument();
     const reasons = screen.getByRole('region', { name: 'Причины риска' });
     expect(within(reasons).getAllByRole('listitem').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('region', { name: 'Что сделать' })).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('main scenario: board -> card -> Bitrix24 task -> back', () => {
     window.location.hash = '#/employee/does-not-exist';
     render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
     expect(
-      await screen.findByRole('heading', { level: 2, name: /Сотрудник не найден/ }),
+      await screen.findByRole('heading', { level: 1, name: /Сотрудник не найден/ }),
     ).toBeInTheDocument();
     expect(screen.getByText(/первых 90 дней/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /К списку/ })).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('main scenario: board -> card -> Bitrix24 task -> back', () => {
     render(<App employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
     const firstRow = within(screen.getByRole('table')).getAllByRole('row')[1] as HTMLElement;
     await userEvent.click(within(firstRow).getByRole('button'));
-    const heading = await screen.findByRole('heading', { level: 2 });
+    const heading = await screen.findByRole('heading', { level: 1 });
     expect(scrollTo).toHaveBeenCalledWith(0, 0);
     expect(document.activeElement).toBe(heading);
     scrollTo.mockRestore();

@@ -71,7 +71,7 @@ describe('page title', () => {
     const firstRow = within(screen.getByRole('table')).getAllByRole('row')[1] as HTMLElement;
     const name = within(firstRow).getByRole('button').textContent as string;
     await userEvent.click(within(firstRow).getByRole('button'));
-    await screen.findByRole('heading', { level: 2, name });
+    await screen.findByRole('heading', { level: 1, name });
     expect(document.title).toBe(`${name} · Адаптация новичков`);
     await userEvent.click(screen.getByRole('button', { name: /К списку/ }));
     await screen.findByRole('table');

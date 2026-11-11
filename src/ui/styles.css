@@ -74,7 +74,7 @@ h1 { margin: 8px 0 4px; font-size: 24px; }
 button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .tile-label { font-weight: 600; }
 .tile-count { font-size: 30px; line-height: 1.1; }
-.tile-hint { font-size: 12px; opacity: 0.85; }
+.tile-hint { font-size: 12px; }
 
 .chart {
   margin: 0; padding: 12px 14px; background: var(--surface);
@@ -114,12 +114,12 @@ table.board { width: 100%; border-collapse: collapse; min-width: 820px; }
 
 .card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.card-head h2 { margin: 0; font-size: 24px; }
+.card-head h1 { margin: 0; font-size: 24px; }
 .back { justify-self: start; background: none; border: 0; padding: 4px 0; font: inherit; color: var(--accent); cursor: pointer; }
 .card-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 @media (min-width: 860px) { .card-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
-.panel h3 { margin: 0 0 8px; font-size: 15px; }
+.panel h2 { margin: 0 0 8px; font-size: 15px; }
 .panel ul { margin: 0; padding-left: 18px; }
 .primary { margin-top: 8px; padding: 9px 14px; font: inherit; font-weight: 600; color: #fff; background: var(--accent); border: 0; border-radius: 8px; cursor: pointer; }
 @media (prefers-color-scheme: dark) { .primary { color: #0b1220; } }
@@ -154,7 +154,7 @@ table.board { width: 100%; border-collapse: collapse; min-width: 820px; }
 /* navigation and analytics */
 .nav { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0 16px; }
 .nav a { padding: 6px 12px; border-radius: 8px; text-decoration: none; color: inherit; border: 1px solid var(--border, #d0d5dd); }
-.nav a[aria-current='page'] { background: var(--accent, #1d4ed8); color: #fff; border-color: transparent; }
+.nav a[aria-current='page'] { background: var(--accent, #1d4ed8); color: var(--bg); border-color: transparent; }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .fact { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--border, #d0d5dd); border-radius: 10px; }
 .fact strong { font-size: 28px; }
@@ -168,3 +168,5 @@ table.board { width: 100%; border-collapse: collapse; min-width: 820px; }
 .rates th, .rates td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border, #d0d5dd); }
 .rates .few { color: var(--muted); font-style: italic; }
 .chart-block, .app section h2 { margin-top: 20px; }
+
+a { color: var(--accent); }

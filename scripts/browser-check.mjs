@@ -5,6 +5,7 @@
 //
 // Env: BASE_URL (default http://localhost:4173/), CHROME_PATH (default: macOS Google Chrome),
 //      SHOT_DIR (optional: where to save screenshots).
+import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:4173/';
@@ -27,6 +28,19 @@ page.on('console', (m) => ['error', 'warning'].includes(m.type()) && problems.pu
 page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
 page.on('requestfailed', (r) => problems.push(`requestfailed: ${r.url()}`));
 page.on('response', (r) => r.status() >= 400 && problems.push(`http ${r.status()}: ${r.url()}`));
+
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const SAMPLE = (name) => `${ROOT}public/samples/${name}`;
+const AXE = `${ROOT}node_modules/axe-core/axe.min.js`;
+
+// Zero axe-core violations (WCAG 2.x A/AA and best practices) on the current screen.
+const axeClean = async (label) => {
+  if (!(await page.evaluate(() => typeof window.axe !== 'undefined'))) await page.addScriptTag({ path: AXE });
+  const { violations } = await page.evaluate(() => window.axe.run(document, { resultTypes: ['violations'] }));
+  check(`axe: ${label}`, violations.length === 0, violations.map((v) => `${v.id} (${v.nodes.length}): ${v.nodes[0]?.target} ${v.nodes[0]?.any[0]?.message ?? ''}`).join(' | '));
+};
+const waitText = (text) => page.waitForFunction((t) => document.body.innerText.includes(t), { timeout: 5000 }, text);
+const hasText = (text) => page.evaluate((t) => document.body.innerText.includes(t), text);
 
 const rowTexts = () => page.$$eval('table.board tbody tr', (rs) => rs.map((r) => r.textContent ?? ''));
 const clickButton = (text, exact = true) =>
@@ -53,6 +67,7 @@ const all = await rowTexts();
 check('board has rows', all.length >= 20, `rows=${all.length}`);
 check('first row is high risk', all[0].includes('Высокий'));
 await shot(page, '01-board');
+await axeClean('board');
 
 await page.evaluate(() => [...document.querySelectorAll('button.tile')].find((b) => b.textContent.includes('Высокий')).click());
 const high = await rowTexts();
@@ -86,9 +101,9 @@ check('page was scrolled down before opening', (await page.evaluate(() => window
 const lastName = await page.$eval('table.board tbody tr:last-child button.link', (b) => b.textContent);
 await page.click('table.board tbody tr:last-child');
 await page.waitForSelector('article.card');
-check('card opens for the clicked row', (await page.$eval('article.card h2', (e) => e.textContent)) === lastName, lastName);
+check('card opens for the clicked row', (await page.$eval('article.card h1', (e) => e.textContent)) === lastName, lastName);
 check('card opens scrolled to the top', (await page.evaluate(() => window.scrollY)) === 0);
-check('focus moves to the card heading', await page.evaluate(() => document.activeElement?.tagName === 'H2'));
+check('focus moves to the card heading', await page.evaluate(() => document.activeElement?.tagName === 'H1'));
 check('card url is a hash route', page.url().includes('#/employee/'), page.url());
 const cardUrl = page.url();
 
@@ -100,6 +115,7 @@ check('page title names the open card', (await page.title()) === `${name} · А�
 check('card lists reasons', (await page.$$eval('section[aria-label="Причины риска"] li', (l) => l.length)) >= 1);
 check('timeline rendered', (await page.$$eval('.timeline .marker', (m) => m.length)) >= 6);
 await shot(page, '02-card', { fullPage: true });
+await axeClean('card');
 
 await clickButton('Создать задачу в Битрикс24');
 await page.waitForSelector('[role=dialog]');
@@ -118,16 +134,83 @@ await page.goto(cardUrl, { waitUntil: 'networkidle0' });
 await page.reload({ waitUntil: 'networkidle0' });
 check('deep link survives reload', (await page.$('article.card')) !== null);
 await page.goto(BASE + '#/employee/nope', { waitUntil: 'networkidle0' });
-check('unknown id shows not found', (await page.$eval('.empty h2', (e) => e.textContent)) === 'Сотрудник не найден');
+check('unknown id shows not found', (await page.$eval('.empty h1', (e) => e.textContent)) === 'Сотрудник не найден');
+
+// Analytics on the demo data.
+await page.goto(BASE + '#/analytics', { waitUntil: 'networkidle0' });
+check('analytics: title', (await page.title()) === 'Аналитика ухода · Адаптация новичков', await page.title());
+check('analytics: survival chart has a label with day 90', (await page.$eval('svg[role=img]', (e) => e.getAttribute('aria-label'))).includes('90-й день'));
+check('analytics: two rate tables', (await page.$$('table.rates')).length === 2);
+check('analytics: no NaN anywhere', !(await hasText('NaN')));
+await shot(page, '06-analytics', { fullPage: true });
+await axeClean('analytics');
+
+// Import path end to end with the downloadable samples.
+await page.goto(BASE + '#/import', { waitUntil: 'networkidle0' });
+await page.reload({ waitUntil: 'networkidle0' });
+check('import: says files stay in the browser', await hasText('только в браузере'));
+await axeClean('import (empty)');
+const inputs = await page.$$('input[type=file]');
+await inputs[0].uploadFile(SAMPLE('people.csv'));
+await waitText('Импортировано: 12');
+check('import: 12 people, 0 skipped', (await hasText('Пропущено: 0')));
+await axeClean('import (people loaded)');
+await shot(page, '07-import');
+await page.$eval('.actions button', (b) => b.click());
+await page.waitForSelector('section[aria-label="Новички по истории подразделений"]');
+check('people only: banner says uploaded data', (await page.$eval('.banner', (e) => e.textContent)).includes('Загруженные данные'));
+check('people only: explains why there is no risk', await hasText('нет задач адаптации'));
+check('people only: no risk badges', !(await hasText('Высокий')) && !(await hasText('Средний')));
+await axeClean('history board');
+await shot(page, '08-history', { fullPage: true });
+
+await page.reload({ waitUntil: 'networkidle0' });
+await page.goto(BASE + '#/import', { waitUntil: 'networkidle0' });
+const inputs2 = await page.$$('input[type=file]');
+await inputs2[0].uploadFile(SAMPLE('people.csv'));
+await waitText('Импортировано: 12');
+await inputs2[1].uploadFile(SAMPLE('tasks.csv'));
+await waitText('Задачи: импортировано 20');
+check('import: tasks linked, none skipped', await hasText('пропущено 0'));
+await page.$eval('.actions button', (b) => b.click());
+await page.waitForSelector('table.board');
+const imported = await rowTexts();
+check('people + tasks: rule-based board with risk levels', imported.length > 0 && imported.some((t) => /Высокий|Средний|Низкий/.test(t)), `rows=${imported.length}`);
+await axeClean('imported board');
+await page.click('.nav a[href="#/analytics"]');
+await page.waitForSelector('table.rates');
+check('analytics follows the imported data', await hasText('Магазин'));
+await axeClean('analytics (imported)');
+await page.goto(BASE + '#/import', { waitUntil: 'networkidle0' });
+await clickButton('Вернуться к демо');
+await page.waitForSelector('table.board');
+check('reset returns to the demo', (await page.$eval('.banner', (e) => e.textContent)).includes('Демо-данные'));
+
+// The same axe checks in the light colour scheme (the checks above ran in whatever Chrome defaults to).
+for (const scheme of ['light', 'dark']) {
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: scheme }]);
+  for (const hash of ['#/', '#/analytics', '#/import']) {
+    await page.goto(BASE + hash, { waitUntil: 'networkidle0' });
+    await page.reload({ waitUntil: 'networkidle0' });
+    await axeClean(`${hash} in ${scheme} scheme`);
+  }
+}
 
 await page.setViewport({ width: 390, height: 844, isMobile: true });
 await page.goto(BASE, { waitUntil: 'networkidle0' });
 check('mobile board: no horizontal page scroll', (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 0);
 await shot(page, '04-mobile');
+await axeClean('mobile board');
 await page.click('table.board tbody tr:first-child');
 await page.waitForSelector('article.card');
 check('mobile card: no horizontal page scroll', (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 0);
 await shot(page, '05-mobile-card');
+await axeClean('mobile card');
+for (const [hash, label] of [['#/analytics', 'analytics'], ['#/import', 'import']]) {
+  await page.goto(BASE + hash, { waitUntil: 'networkidle0' });
+  check(`mobile ${label}: no horizontal page scroll`, (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 0);
+  await axeClean(`mobile ${label}`);
+}
 
 check('no console errors, warnings, failed or 4xx requests', problems.length === 0, problems.join(' | '));
 await browser.close();

@@ -85,17 +85,17 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
 
   if (route.name === 'analytics') {
     return (
-      <div className="app">
+      <main className="app">
         {banner}
         <Nav active="analytics" />
         <AnalyticsScreen employees={employees} asOf={asOf} />
-      </div>
+      </main>
     );
   }
 
   if (route.name === 'import') {
     return (
-      <div className="app">
+      <main className="app">
         {banner}
         <Nav active="import" />
         <ImportScreen
@@ -103,20 +103,20 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
           onUse={useDataset}
           onReset={() => useDataset({ employees: demoEmployees, asOf: demoAsOf, source: 'demo' })}
         />
-      </div>
+      </main>
     );
   }
 
   if (route.name === 'employee') {
     const row = openRow;
     return (
-      <div className="app">
+      <main className="app">
         {banner}
         {row ? (
           <EmployeeCard employee={row.employee} asOf={asOf} onBack={() => navigate('#/')} />
         ) : (
           <div className="empty">
-            <h2>Сотрудник не найден</h2>
+            <h1>Сотрудник не найден</h1>
             <p>
               Его нет на доске: возможно, он уже вышел за пределы первых 90 дней, уволился или
               ссылка устарела.
@@ -124,12 +124,12 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
             <a href="#/">← К списку</a>
           </div>
         )}
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="app">
+    <main className="app">
       {banner}
       <Nav active="board" />
       <header>
@@ -177,6 +177,6 @@ export function App({ employees: demoEmployees, asOf: demoAsOf }: AppProps) {
         руководителя и т. д.). В задании сказано только про задачи приёма и увольнения, поэтому
         это нужно проверить на ваших данных.
       </p>
-    </div>
+    </main>
   );
 }

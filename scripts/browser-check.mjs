@@ -142,7 +142,7 @@ check('analytics: title', (await page.title()) === 'Аналитика уход�
 check('analytics: survival chart has a label with day 90', (await page.$eval('svg[role=img]', (e) => e.getAttribute('aria-label'))).includes('90-й день'));
 check('analytics: department, position and backtest tables', (await page.$$('table.rates')).length === 3);
 const bt = await page.$$eval('table[aria-label="Доля отмеченных правилами"] tbody tr', (rs) => rs.map((r) => r.textContent));
-check('analytics: backtest block is labelled circular on the demo', bt.length === 2 && (await hasText('Проверка круговая')), bt.join(' | '));
+check('analytics: backtest has 4 cut days x 2 thresholds and is labelled circular on the demo', bt.length === 8 && (await hasText('Проверка круговая')), bt.join(' | '));
 check('analytics: no NaN anywhere', !(await hasText('NaN')));
 await shot(page, '06-analytics', { fullPage: true });
 await axeClean('analytics');

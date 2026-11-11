@@ -29,14 +29,20 @@ function asOfCut(task: OnboardingTask, cutDate: ISODate): OnboardingTask {
  * (hired at least 90 days ago), only people with tasks, only those still employed on the cut day.
  * A completed task without a completion date counts as open: its timing is unknown.
  */
-export function backtest(employees: Employee[], asOf: ISODate, cutDay: number): BacktestResult {
+export function backtest(
+  employees: Employee[],
+  asOf: ISODate,
+  cutDay: number,
+  minLevel: 'medium' | 'high' = 'medium',
+): BacktestResult {
   const earlyLeavers: BacktestGroup = { n: 0, flagged: 0 };
   const stayers: BacktestGroup = { n: 0, flagged: 0 };
 
   for (const e of employees) {
     if (e.tasks.length === 0) continue;
     if (daysBetween(e.hireDate, asOf) < 90) continue;
-    const leftAt = e.status === 'left' && e.leaveDate ? daysBetween(e.hireDate, e.leaveDate) : undefined;
+    const leftAt =
+      e.status === 'left' && e.leaveDate ? daysBetween(e.hireDate, e.leaveDate) : undefined;
     if (leftAt !== undefined && leftAt <= cutDay) continue;
 
     const cutDate = addDays(e.hireDate, cutDay);
@@ -45,7 +51,8 @@ export function backtest(employees: Employee[], asOf: ISODate, cutDay: number): 
       status: 'active',
       tasks: e.tasks.map((t) => asOfCut(t, cutDate)),
     };
-    const flagged = evaluateRisk(snapshot, cutDate).level !== 'low';
+    const level = evaluateRisk(snapshot, cutDate).level;
+    const flagged = minLevel === 'high' ? level === 'high' : level !== 'low';
     const group = leftAt !== undefined && leftAt <= 90 ? earlyLeavers : stayers;
     group.n += 1;
     if (flagged) group.flagged += 1;

@@ -89,3 +89,16 @@ describe('backtest', () => {
     expect(backtest([], ASOF, 20).stayers).toEqual({ n: 0, flagged: 0 });
   });
 });
+
+describe('backtest threshold', () => {
+  it('counts only high risk when asked, and medium-or-high by default', () => {
+    // mentor done on day 5, check-in still open on day 20: overdue 10 + no check-in 20 + idle 15 = 45
+    const medium = person({ tasks: chain(5) });
+    expect(backtest([medium], ASOF, 20).stayers.flagged).toBe(1);
+    expect(backtest([medium], ASOF, 20, 'medium').stayers.flagged).toBe(1);
+    expect(backtest([medium], ASOF, 20, 'high').stayers.flagged).toBe(0);
+    // nothing done at all on day 20: 20 + 25 + 20 + 15 = 80, high
+    const high = person({ tasks: chain() });
+    expect(backtest([high], ASOF, 20, 'high').stayers.flagged).toBe(1);
+  });
+});

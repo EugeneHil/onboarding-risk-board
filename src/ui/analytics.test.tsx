@@ -140,6 +140,20 @@ describe('rules backtest block', () => {
     expect(block.textContent).not.toMatch(/NaN/);
   });
 
+  it('shows several cut days and both thresholds, so the reader sees where the rules separate and where not', () => {
+    render(<AnalyticsScreen employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} synthetic />);
+    const table = screen.getByRole('table', { name: /Доля отмеченных правилами/ });
+    const rows = within(table).getAllByRole('row');
+    const labels = rows.map((r) => r.textContent ?? '');
+    for (const day of [7, 14, 20, 30]) {
+      expect(labels.some((t) => t.startsWith(`${day}-й день`))).toBe(true);
+    }
+    expect(table.textContent).toMatch(/средний или высокий/i);
+    expect(table.textContent).toMatch(/только высокий/i);
+    expect(table.textContent).toMatch(/Разница/);
+    expect(table.textContent).not.toMatch(/NaN/);
+  });
+
   it('does not call the check circular for imported data', () => {
     render(<AnalyticsScreen employees={DEMO_EMPLOYEES} asOf={DEMO_AS_OF} />);
     const block = screen.getByRole('region', { name: /Проверка правил/ });

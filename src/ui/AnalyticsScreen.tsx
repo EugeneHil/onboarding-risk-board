@@ -50,7 +50,20 @@ function RateTable({
   );
 }
 
-const CUT_DAY = 20;
+const CUT_DAYS = [7, 14, 20, 30];
+const THRESHOLDS = [
+  { id: 'medium' as const, label: 'средний или высокий' },
+  { id: 'high' as const, label: 'только высокий' },
+];
+
+const cell = (share: number | undefined, n: number) =>
+  share === undefined ? '—' : `${pct(share)} из ${n}`;
+
+function difference(leavers: number | undefined, stayers: number | undefined): string {
+  if (leavers === undefined || stayers === undefined) return '—';
+  const pp = Math.round((leavers - stayers) * 100);
+  return `${pp > 0 ? '+' : ''}${pp} п.п.`;
+}
 
 export function AnalyticsScreen({
   employees,
@@ -72,8 +85,17 @@ export function AnalyticsScreen({
     [employees, asOf],
   );
   const hasTasks = useMemo(() => employees.some((e) => e.tasks.length > 0), [employees]);
-  const test = useMemo(
-    () => (hasTasks ? backtest(employees, asOf, CUT_DAY) : undefined),
+  const tests = useMemo(
+    () =>
+      hasTasks
+        ? CUT_DAYS.flatMap((day) =>
+            THRESHOLDS.map((t) => ({
+              day,
+              threshold: t,
+              result: backtest(employees, asOf, day, t.id),
+            })),
+          )
+        : undefined,
     [employees, asOf, hasTasks],
   );
   const leavers = employees.filter((e) => e.status === 'left').length;
@@ -136,38 +158,48 @@ export function AnalyticsScreen({
           label={(k) => k || 'Не указано'}
         />
       </section>
-      {test && (
+      {tests && (
         <section aria-label="Проверка правил на истории">
           <h2>Проверка правил на истории</h2>
           <p>
-            Как если бы правила риска смотрели на каждого на {CUT_DAY}-й день работы: кого из тех,
-            кто потом ушёл или остался, они бы отметили средним или высоким риском.
+            Как если бы правила риска смотрели на каждого на 7-й, 14-й, 20-й и 30-й день работы:
+            кого из тех, кто потом ушёл до 90-го дня или остался, они бы отметили. Важна разница:
+            если она около нуля или отрицательная, правила на этот день не отличают будущих ушедших
+            от остальных.
           </p>
-          <table className="rates" aria-label="Доля отмеченных правилами">
-            <thead>
-              <tr>
-                <th scope="col">Группа</th>
-                <th scope="col">Человек</th>
-                <th scope="col">Отмечены правилами</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Ушедшие до 90-го дня</th>
-                <td>{test.earlyLeavers.n}</td>
-                <td>
-                  {test.flaggedShareLeavers === undefined ? '—' : pct(test.flaggedShareLeavers)}
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">Остались</th>
-                <td>{test.stayers.n}</td>
-                <td>
-                  {test.flaggedShareStayers === undefined ? '—' : pct(test.flaggedShareStayers)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div
+            className="table-wrap"
+            role="region"
+            aria-label="Таблица проверки правил"
+            tabIndex={0}
+          >
+            <table className="rates" aria-label="Доля отмеченных правилами">
+              <thead>
+                <tr>
+                  <th scope="col">Срез</th>
+                  <th scope="col">Отмечен, если риск</th>
+                  <th scope="col">Ушедшие до 90-го дня</th>
+                  <th scope="col">Остались</th>
+                  <th scope="col">Разница</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tests.map(({ day, threshold, result }) => (
+                  <tr key={`${day}-${threshold.id}`}>
+                    {threshold.id === 'medium' ? (
+                      <th scope="row" rowSpan={THRESHOLDS.length}>
+                        {day}-й день
+                      </th>
+                    ) : null}
+                    <td>{threshold.label}</td>
+                    <td>{cell(result.flaggedShareLeavers, result.earlyLeavers.n)}</td>
+                    <td>{cell(result.flaggedShareStayers, result.stayers.n)}</td>
+                    <td>{difference(result.flaggedShareLeavers, result.flaggedShareStayers)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <p className="footnote">
             {synthetic
               ? 'Проверка круговая: демо-данные выдуманы так, что выполнение задач и уход связаны, поэтому результат показывает лишь, что механизм работает, а не что правила хороши.'
